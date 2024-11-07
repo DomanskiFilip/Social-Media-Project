@@ -2,9 +2,9 @@
     --main: #151515;
     --main_secondary: #8b3838;
     --main_secondary_shadow: #B43F3F;
-    --text: #b4623f;
+    --text: #CBDCEB;
     --text_secondary: #151515;
-    --action: #CBDCEB;
+    --action: #b4623f;
     --shadow: #877c7c;
 }
 
@@ -29,6 +29,11 @@ html, body{
 header{
     width: 100%;
     height: 10%;
+}
+
+#API{
+    color: var(--text);
+    font-size: 0.7rem;
 }
 
 #logo{

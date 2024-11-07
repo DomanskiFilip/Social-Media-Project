@@ -1,0 +1,6 @@
+**/node_modules
+**/.pnp
+**/.git
+.git
+.gitignore
+node_modules
