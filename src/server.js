@@ -5,8 +5,9 @@ const bodyParser = require('body-parser');
 const axios = require('axios');
 const https = require('https');
 const path = require('path'); 
+const mongodb = require('mongodb').MongoClient;
+
 const app = express();
-const mongodb = require('mongodb');
 const PORT = 4000;
 
 app.use(cors());
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../src/public')));
 // send to server
 app.use(bodyParser.json());
+
 
 // Define a route to get air quality data to show at the top of the page
 app.get('/weather', (req, res) => {
@@ -26,7 +28,7 @@ app.get('/weather', (req, res) => {
 	  port: null,
 	  path: '/current.json?q=53.1%2C-0.13',
 	  headers: {
-		'x-rapidapi-key': '4ac38c9824mshee82220f019df95p17748fjsnbd9456480bc1',
+		//'x-rapidapi-key': '4ac38c9824mshee82220f019df95p17748fjsnbd9456480bc1',
 		'x-rapidapi-host': 'weatherapi-com.p.rapidapi.com'
 	  }
 	};
@@ -62,8 +64,32 @@ app.get('/M00982633', (req, res) => {
   });
 
 // post to server
-app.post('/M00982633', (req, res) => {
+const mongoUrl = 'mongodb://127.0.0.1:27017';
+const dbName = 'Social-Media';
 
+
+mongodb.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
+    if (err) {
+        console.error('Failed to connect to the database. Error:', err);
+        process.exit(1);
+    }
+    const db = client.db(dbName);
+    const usersCollection = db.collection('users');
+
+    app.post('/M00982633/users', (req, res) => {
+        const { username, password, confirmPassword } = req.body;
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({ error: 'Passwords do not match' });
+        }
+
+        usersCollection.insertOne({ username, password }, (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to register user' });
+            }
+            return res.status(201).json({ message: 'User registered successfully', userId: result.insertedId });
+        });
+    });
 });
 
 // Start the server

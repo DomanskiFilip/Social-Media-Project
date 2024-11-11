@@ -34,7 +34,6 @@ html, body{
     height: 100%;
     z-index: 100;
     background-color: var(--main);
-    display: none;
 }
 
 #login_register_screen form{
