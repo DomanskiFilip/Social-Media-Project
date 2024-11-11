@@ -28,3 +28,4 @@ PortableMongoDB_6.0/.
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+src/MongoDBCompass.lnk

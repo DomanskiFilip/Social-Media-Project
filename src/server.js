@@ -5,7 +5,8 @@ const bodyParser = require('body-parser');
 const axios = require('axios');
 const https = require('https');
 const path = require('path'); 
-const mongodb = require('mongodb').MongoClient;
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const ObjectId = require('mongodb').ObjectId;
 
 const app = express();
 const PORT = 4000;
@@ -16,7 +17,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../src/public')));
 // send to server
 app.use(bodyParser.json());
-
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Define a route to get air quality data to show at the top of the page
 app.get('/weather', (req, res) => {
@@ -63,37 +64,67 @@ app.get('/M00982633', (req, res) => {
 	res.sendFile(path.join(__dirname, '../src/public/index.html'));
   });
 
-// post to server
-const mongoUrl = 'mongodb://127.0.0.1:27017';
+
+// MongoDB connection
+const mongoUrl = 'mongodb://127.0.0.1:27017?retryWrites=true&w=majority';
 const dbName = 'Social-Media';
 
+const client = new MongoClient(mongoUrl,{
+	serverApi: {
+		version: ServerApiVersion.v1,
+		strict: false,
+		depricationErrors: true,
+	},
+})
 
-mongodb.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
-    if (err) {
-        console.error('Failed to connect to the database. Error:', err);
-        process.exit(1);
-    }
-    const db = client.db(dbName);
-    const usersCollection = db.collection('users');
+// database name
+const db = client.db(dbName);
+// collection name
+const collection = db.collection('users');
 
-    app.post('/M00982633/users', (req, res) => {
-        const { username, password, confirmPassword } = req.body;
+// function to register users
+async function registerUser(usersCollection, username, password) {
+    const newUser = { username: username, password: password };
+    const result = await usersCollection.insertOne(newUser);
+    console.log(result);
+}
 
-        if (password !== confirmPassword) {
-            return res.status(400).json({ error: 'Passwords do not match' });
-        }
-
-        usersCollection.insertOne({ username, password }, (err, result) => {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to register user' });
-            }
-            return res.status(201).json({ message: 'User registered successfully', userId: result.insertedId });
-        });
-    });
+// POST endpoint to register user
+app.post('/M00982633/register', (req, res) => {
+	const { username, password} = req.body;
+	console.log('Received request at /M00982633/register:', username);
+	// register user
+	registerUser(collection, username, password)
+		.then(() => {
+			res.status(201).json({ message: 'User registered successfully' });
+		})
+		.catch(error => {
+			console.error('Error registering user:', error);
+			res.status(500).json({ error: 'Failed to register user' });
+		});
 });
 
+// POST endpoint to login user
+app.post('/M00982633/login', (req, res) => {
+	const { username, password } = req.body;
+	console.log('Received request at /M00982633/login:', username);
+	// find user in database
+	collection.findOne({ username: username, password: password })
+		.then(user => {
+			if (user) {
+				res.status(200).json({username: username});
+			} else {
+				res.status(401).json({ error: 'Invalid username or password' });
+			}
+		})
+		.catch(error => {
+			res.status(500).json({ error: 'Failed to login user' });
+		});
+	}
+);
+
+
 // Start the server
-app.listen(PORT, () => {
-	console.log(`Server running at http://localhost:${PORT}/M00982633`);
-	console.log(`Server running at http://127.0.0.1:${PORT}/M00982633`);
-  });
+app.listen(PORT, () => {;
+    console.log(`Server running at http://127.0.0.1:${PORT}/M00982633`);
+});

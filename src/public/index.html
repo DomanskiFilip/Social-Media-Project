@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <script type="module" src="rapidApi.js"></script>
-    <script type="module" src="loginScreen.js"></script>
+    <script type="module" src="rapidApi.js" defer></script>
+    <script type="module" src="loginScreen.js" defer></script>
+    <script type="module" src="profile.js" defer></script>
     <title>Social Media Platrofm by Filip Domanski</title>
 </head>
 <body>
-
+    <!-- login and register screen -->
     <section id="login_register_screen">
         <section id="login_section">
             <Form id="login_form">
@@ -29,23 +30,29 @@
                 <span id="register_error"></span>
                 <button type="submit" id="register_button">REGISTER</button>
             </Form>
+            <h2 id="register_succes"></h2>
         </section>
     </section>
 
+    <!-- main page -->
     <header>
         <section id="externalAPISpace">
            <span id="API"></span>
         </section>
         <section id="logo">
-            <h1>SUNSET</h1>
+            <!-- text logo reloading the page -->
+            <a href="."><h1>SUNSET</h1></a>
         </section>
     </header>
 
     <main>
+        <!-- profile section on the left-->
         <aside id="profile_section">
-            
+            <span id="profile_name"></span>
+            <button id="logout_button">Log out</button>
         </aside>
 
+        <!-- main section search bar + feed in the middle-->
         <section id="main">
             <section id="search_bar">
 
@@ -55,12 +62,15 @@
             </article>
         </section>  
 
+        <!-- post section on the rigth-->
         <aside id="post_section">
 
         </aside>
     </main>
+
+    <!-- footer -->
     <footer>
-        
+        <p>© <span id="year"></span> Filip Domański</p>
     </footer>
 </body>
 </html>
