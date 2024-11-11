@@ -7,6 +7,10 @@ node_modules/
 .pnp.js
 .npm
 
+# database
+/PortableMongoDB_6.0
+PortableMongoDB_6.0/
+PortableMongoDB_6.0/.
 # testing
 /coverage
 

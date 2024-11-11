@@ -1,17 +1,20 @@
 
 const express = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 const axios = require('axios');
 const https = require('https');
 const path = require('path'); 
 const app = express();
+const mongodb = require('mongodb');
 const PORT = 4000;
 
 app.use(cors());
 app.use(express.json());
 // serve static files like index.html to localhos
-app.use(express.static(path.join(__dirname, '../src')));
-// MongoDB connection
+app.use(express.static(path.join(__dirname, '../src/public')));
+// send to server
+app.use(bodyParser.json());
 
 // Define a route to get air quality data to show at the top of the page
 app.get('/weather', (req, res) => {
@@ -55,8 +58,13 @@ app.get('/weather', (req, res) => {
 
 // Serve index.html at /M00982633
 app.get('/M00982633', (req, res) => {
-	res.sendFile(path.join(__dirname, '../src/index.html'));
+	res.sendFile(path.join(__dirname, '../src/public/index.html'));
   });
+
+// post to server
+app.post('/M00982633', (req, res) => {
+
+});
 
 // Start the server
 app.listen(PORT, () => {
