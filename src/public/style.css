@@ -184,6 +184,49 @@ main aside{
 
 #post_section{
     width: 30%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+#post_section h2{
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+    color: var(--main);
+    text-shadow: var(--main_shadow) 0px 0px 10px;
+}
+
+#post_section form{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50%;
+}
+
+#post_section form textarea{
+    width: 80%;
+    height: 30%;
+    background-color: var(--main);
+    color: var(--text);
+    resize: none;
+}
+
+#post_button{
+    width: 80%;
+    background-color: var(--main);
+    color: var(--main_secondary);
+    border-radius: 10px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+#post_section form button:hover{
+    cursor: pointer;
 }
 
 /*main section #main*/
@@ -205,14 +248,79 @@ main aside{
 #feed{
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
+    height: 80%;
     width: 100%;
-    height: 90%;
+    overflow-y: auto;
+}
+
+#feed::-webkit-scrollbar {
+    opacity: 0;
+    width: 1px;
+  }
+
+#feed div{
+    border: var(--main_secondary) 2px solid;
+    color: var(--text);
+    width: 80%;
+    height: 10%;
+    margin-bottom: 0.5rem; /* Add margin between posts */
+    padding: 0.5rem; /* Add padding for better readability */
+}
+
+#feed div:hover{
+    cursor: pointer;
+    background-color: var(--main_secondary);
+}
+
+#feed article{
+    width: 80%;
+    height: 100%;
+    border: var(--main_secondary) 2px solid;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+#feed article .poster{
+    margin-top: 0.5rem;
+    margin-left: 0.5rem;
+    align-self: flex-start;
+    border-bottom: var(--text) 2px solid;
+}
+
+.post_content_display{
+    width: 90%;
+    height: 80%;
+    padding: 0.5rem;
+    overflow-y: auto;
+}
+
+.post_date{
+    align-self: center;
+}
+
+#back {
+    background-color: var(--main);
+    color: var(--main_secondary);
+    border-radius: 10px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    margin-top: auto;
+    align-self: center;
+    padding: 0.5rem;
+}
+
+#back:hover{
+    background-color: var(--main_secondary);
+    color: var(--main);
+    cursor: pointer;
 }
 
 /*footer*/
-
 footer{
     width: 100%;
     height: 10%;

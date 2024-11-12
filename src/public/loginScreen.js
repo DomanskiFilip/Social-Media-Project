@@ -17,10 +17,10 @@ const profileName = document.getElementById('profile_name');
 // registering new users functionality
 registerButton.addEventListener('click', (event) => {
     event.preventDefault(); // prevent default form functionality
-    RegisterUser(); // initate function to register user
+    registerUser(); // initate function to register user
 });
 
-async function RegisterUser() {
+async function registerUser() {
     // check if username and password are not empty
     if (usernameRegister.value === "" || passwordRegister.value === "") {
         registerError.innerHTML = "Please enter a username and password";
@@ -44,7 +44,6 @@ async function RegisterUser() {
         password: passwordRegister.value,
     };
 
-
     try {
         const response = await fetch('http://127.0.0.1:4000/M00982633/register', {
             method: 'POST',
@@ -53,8 +52,17 @@ async function RegisterUser() {
             },
             body: JSON.stringify(registerData)
         });
-        registerForm.style.display = 'none';
-        registerSucces.textContent = "Registration successful. Please login.";
+
+        // check if registration was successful or if the user was taken
+        if (response.status === 201) {
+            registerForm.style.display = 'none';
+            registerSucces.textContent = "Registration successful. Please login.";
+        } else {
+            if (response.status === 409) {
+                registerError.innerHTML = "Username already taken";
+            } else
+            registerError.innerHTML = "Registration failed. Please try again.";
+        }
     } catch (error) {
         registerError.innerHTML = "Registration failed. Please try again.";
     }
@@ -64,10 +72,10 @@ async function RegisterUser() {
 // login functionality
 loginButton.addEventListener('click', (event) => {
     event.preventDefault(); // prevent default form functionality
-    LoginUser(); // initate function to login user
+    loginUser(); // initate function to login user
 });
 
-async function LoginUser() {
+async function loginUser() {
     // check if username and password are not empty
     if (usernameLogin.value === "" || passwordLogin.value === "") {
         loginError.innerHTML = "Please enter your username and password";
@@ -87,13 +95,17 @@ async function LoginUser() {
             },
             body: JSON.stringify(loginData)
         });
+
+        if (response.status === 200) {
             const user_data = await response.json();
             sessionStorage.setItem('user_data', JSON.stringify(user_data));
             profileName.textContent = user_data.username;
             profileName.title = user_data.username;
             loginRegisterScreen.style.display = 'none';
+        } else {
+            loginError.innerHTML = "Invalid username or password";
+        }
     } catch (error) {
         loginError.innerHTML = "Please try again";
-        return null;
     }
 }

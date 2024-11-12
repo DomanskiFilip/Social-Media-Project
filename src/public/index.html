@@ -7,6 +7,7 @@
     <script type="module" src="rapidApi.js" defer></script>
     <script type="module" src="loginScreen.js" defer></script>
     <script type="module" src="profile.js" defer></script>
+    <script type="module" src="postsAndFeed.js" defer></script>
     <title>Social Media Platrofm by Filip Domanski</title>
 </head>
 <body>
@@ -64,7 +65,12 @@
 
         <!-- post section on the rigth-->
         <aside id="post_section">
-
+            <Form id="post_form">
+                <h2>POST</h2>
+                <textarea name="post_content" id="post_content" placeholder="What's on your mind?" maxlength="300"></textarea>
+                <span id="post_error"></span>
+                <button type="submit" id="post_button">POST</button>
+            </Form>
         </aside>
     </main>
 

@@ -5,7 +5,8 @@ const logoutButton = document.getElementById('logout_button');
 const year = document.getElementById('year');
 
 // if user is already logged in, redirect to profile page
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('click', (event) => {
+    event.preventDefault();
     const user_data = JSON.parse(sessionStorage.getItem('user_data'));
     if (user_data) {    
         profileName.textContent = user_data.username;
@@ -23,5 +24,5 @@ logoutButton.addEventListener('click', () => {
     window.location.reload();
 });
 
-// self updateing year in footer
+// self updating year in footer
 year.textContent = new Date().getFullYear();
