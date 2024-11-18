@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -6,7 +5,7 @@ const axios = require('axios');
 const https = require('https');
 const path = require('path'); 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
+const expressSession = require('express-session');
 
 const app = express();
 const PORT = 4000;
@@ -18,6 +17,13 @@ app.use(express.static(path.join(__dirname, '../src/public')));
 // send to server
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(expressSession({
+    secret: "cst 2120 secret",
+    cookie: { maxAge: 60000 },
+    resave: false,
+    saveUninitialized: true
+}));
 
 // Define a route to get air quality data to show at the top of the page
 app.get('/weather', (req, res) => {
@@ -64,17 +70,16 @@ app.get('/M00982633', (req, res) => {
 	res.sendFile(path.join(__dirname, '../src/public/index.html'));
   });
 
-
 // MongoDB connection
 const mongoUrl = 'mongodb://127.0.0.1:27017?retryWrites=true&w=majority';
 const dbName = 'Social-Media';
 
 const client = new MongoClient(mongoUrl,{
-	serverApi: {
-		version: ServerApiVersion.v1,
-		strict: false,
-		depricationErrors: true,
-	},
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: false,
+        depricationErrors: true,
+    },
 })
 
 // database name
@@ -92,16 +97,16 @@ app.post('/M00982633/register', async (req, res) => {
         await client.connect();
         
          // Check if the username already exists
-		const existingUser = await userCollection.findOne({ username: username });
-		if (existingUser) {
-			res.status(409).json({ message: 'Username already taken' });
-			return;
-		}
-		// register user
-		const newUser = { username: username, password: password };
-		const result = await userCollection.insertOne(newUser);
-		console.log(result);
-		res.status(201).json({ message: 'User registered successfully' });
+        const existingUser = await userCollection.findOne({ username: username });
+        if (existingUser) {
+            res.status(409).json({ message: 'Username already taken' });
+            return;
+        }
+        // register user
+        const newUser = { username: username, password: password };
+        const result = await userCollection.insertOne(newUser);
+        console.log(result);
+        res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).json({ error: 'Failed to register user' });
@@ -119,8 +124,9 @@ app.post('/M00982633/login', async (req, res) => {
         await client.connect();
 
         // find user in database
-		const user = await userCollection.findOne({ username: username, password: password });
+        const user = await userCollection.findOne({ username: username, password: password });
         if (user) {
+            req.session.username = username;
             res.status(200).json({ username: username });
         } else {
             res.status(401).json({ error: 'Invalid username or password' });
@@ -133,39 +139,62 @@ app.post('/M00982633/login', async (req, res) => {
     }
 });
 
+app.get('/M00982633/check-login', (req, res) => {
+    if (req.session.username) {
+		console.log('User is logged in:', req.session.username);
+        res.status(200).json({ username: req.session.username });
+    } else {
+        res.status(401).json({ error: 'Not logged in' });
+    }
+});
+
+app.post('/M00982633/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to log out' });
+        }
+        res.status(200).json({ message: 'Logged out successfully' });
+    });
+});
+
 // POST endpoint to post a message
 app.post('/M00982633/posts', async (req, res) => {
-	const { content, date, user } = req.body;
-	const postId = new ObjectId();
-	try {
-		await client.connect();
+    if(!req.session.username) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+    }
 
-		// insert post into database
-		const result = await postCollection.insertOne({ content: content, date: date, user: user, postId: postId });
-		res.status(201).json({ message: 'Post created successfully' });
-	} catch (error) {
-		console.error('Error posting message:', error);
-		res.status(500).json({ error: 'Failed to post message' });
-	} finally {
-		await client.close();
-	}
+    const { content, date } = req.body;
+    const postId = new ObjectId();
+    try {
+        await client.connect();
+
+        // insert post into database
+        const result = await postCollection.insertOne({ content: content, date: date, user: req.session.username, postId: postId });
+        res.status(201).json({ message: 'Post created successfully' });
+    } catch (error) {
+        console.error('Error posting message:', error);
+        res.status(500).json({ error: 'Failed to post message' });
+    } finally {
+        await client.close();
+    }
 });
 
 // GET endpoint to get all posts
 app.get('/M00982633/posts', async (req, res) => {
-	console.log('Received request at /M00982633/posts');
-	try {
-		await client.connect();
+    console.log('Received request at /M00982633/posts');
+    try {
+        await client.connect();
 
-		// get all posts from database
-		const posts = await postCollection.find().toArray();
-		res.status(200).json(posts);
-	} catch (error) {
-		console.error('Error getting posts:', error);
-		res.status(500).json({ error: 'Failed to get posts' });
-	} finally {
-		await client.close();
-	}
+        // get all posts from database
+        const posts = await postCollection.find().toArray();
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error('Error getting posts:', error);
+        res.status(500).json({ error: 'Failed to get posts' });
+    } finally {
+        await client.close();
+    }
 });
 
 // GET endpoint to get a specific post by postId

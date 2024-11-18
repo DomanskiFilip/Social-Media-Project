@@ -92,9 +92,8 @@ async function getPostDetails(postId) {
 async function postThought() {
     let postContent = document.getElementById('post_content');
     const postDate = new Date().toISOString();
-    const user_data = JSON.parse(sessionStorage.getItem('user_data'));
 
-    if(postContent.value === "") {
+    if (postContent.value === "") {
         postError.textContent = "Please enter a message";
         return;
     }
@@ -102,7 +101,6 @@ async function postThought() {
     const post = {
         content: postContent.value,
         date: postDate,
-        user: user_data.username,
     };
 
     try {
@@ -111,7 +109,8 @@ async function postThought() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(post)
+            body: JSON.stringify(post),
+            credentials: 'include' // Ensure cookies are included in the request
         });
         // check if post was created successfully
         response.status === 201 ? postError.textContent = "Post created successfully" : postError.textContent = "Post creation failed";

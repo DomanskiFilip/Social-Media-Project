@@ -98,7 +98,6 @@ async function loginUser() {
 
         if (response.status === 200) {
             const user_data = await response.json();
-            sessionStorage.setItem('user_data', JSON.stringify(user_data));
             profileName.textContent = user_data.username;
             profileName.title = user_data.username;
             loginRegisterScreen.style.display = 'none';
