@@ -9,6 +9,14 @@ postButton.addEventListener('click', (event) => {
 
 // get posts function
 async function getPosts() {
+    const search_bar = document.getElementById('search_bar');
+    search_bar.innerHTML = '';
+    const search = document.createElement('input');
+    search.type = 'text';
+    search.placeholder = 'Search';
+    search.className = 'search';
+    search.id = 'search_feed';
+    search_bar.appendChild(search);
     try {
         const response = await fetch('http://127.0.0.1:4000/M00982633/posts', {
             method: 'GET',
@@ -80,6 +88,7 @@ async function getPostDetails(postId) {
     }
 }
 
+// post thought function for posting a message
 async function postThought() {
     let postContent = document.getElementById('post_content');
     const postDate = new Date().toISOString();
@@ -123,3 +132,5 @@ async function postThought() {
 document.addEventListener('DOMContentLoaded', async () => {
    getPosts();
 });
+
+export { getPosts, getPostDetails, feed };

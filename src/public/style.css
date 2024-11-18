@@ -103,8 +103,18 @@ header{
    padding-left: 5%;
 }
 
-#logo a{
+#logo button{
     text-decoration: none;
+    background-color: var(--main);
+    appearance: none;
+    text-rendering: none;
+    color: var(--main_secondary);
+    box-sizing: none;
+    border-style: none;
+}
+
+#logo button:hover{
+    cursor: pointer;
 }
 
 h1, h2{
@@ -167,6 +177,19 @@ main aside{
     font-weight: bold;
     text-overflow: clip;
     text-transform: uppercase;
+}
+
+.profile_button{
+    background-color: var(--main_secondary);
+    color: var(--main);
+    margin-top: 0 !important;
+    border: none;
+    border-top: var(--main) 2px solid;
+}
+
+.profile_button:hover{
+    cursor: pointer;
+    background-color: var(--text);
 }
 
 #profile_section #logout_button{
@@ -245,6 +268,19 @@ main aside{
     height: 10%;
 }
 
+.search{
+    width: 80%;
+    height: 10%;
+    background-color: var(--main_secondary);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 0.5rem;
+}
+
+.search::placeholder{
+    color: var(--text);
+}
+
 #feed{
     display: flex;
     flex-direction: column;
@@ -265,8 +301,12 @@ main aside{
     color: var(--text);
     width: 80%;
     height: 10%;
-    margin-bottom: 0.5rem; /* Add margin between posts */
-    padding: 0.5rem; /* Add padding for better readability */
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
 }
 
 #feed div:hover{
@@ -297,6 +337,23 @@ main aside{
     height: 80%;
     padding: 0.5rem;
     overflow-y: auto;
+}
+
+.delete_post{
+    background-color: var(--main);
+    color: var(--main_secondary);
+    border-radius: 10px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    align-self: flex-end;
+    padding: 0.5rem;
+    position: relative;
+    right: 0;
+    top: -70px;
+}
+
+.delete_post:hover{
+    cursor: pointer;
 }
 
 .post_date{

@@ -190,6 +190,46 @@ app.get('/M00982633/posts/:postId', async (req, res) => {
 	}
 });
 
+// GET endpoint to get all posts by a specific user
+app.get('/M00982633/posts/user/:username', async (req, res) => {
+	const { username } = req.params;
+	console.log(`Received request at /M00982633/posts/user/${username}`);
+	try {
+		await client.connect();
+		// find the posts in the database
+		const posts = await postCollection.find({ user: username }).toArray();
+		res.status(200).json(posts);
+	} catch (error) {
+		console.error('Error getting posts:', error);
+		res.status(500).json({ error: 'Failed to get posts' });
+	} finally {
+		await client.close();
+	}
+});
+
+// DELETE endpoint to delete a specific post by postId and username
+app.delete('/M00982633/posts/:postId/:username', async (req, res) => {
+    const { postId, username } = req.params;
+    console.log(`Received request at /M00982633/posts/${postId}/${username}`);
+    try {
+        await client.connect();
+        // delete the post from the database
+        const result = await postCollection.deleteOne({ postId: new ObjectId(postId), user: username });
+        if (result.deletedCount === 1) {
+            console.log('Post deleted successfully');
+            res.status(200).json({ message: 'Post deleted' });
+        } else {
+            console.log('Failed to delete post');
+            res.status(500).json({ error: 'Failed to delete post' });
+        }
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        res.status(500).json({ error: 'Failed to delete post' });
+    } finally {
+        await client.close();
+    }
+});
+
 // Start the server
 app.listen(PORT, () => {;
     console.log(`Server running at http://127.0.0.1:${PORT}/M00982633`);
