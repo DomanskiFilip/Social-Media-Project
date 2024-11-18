@@ -17,12 +17,6 @@ logoButton.addEventListener('click', (event) => {
     getPosts();
 });
 
-feedButton.addEventListener('click', (event) => {
-    event.preventDefault();
-    feed.innerHTML = '';
-    getPosts();
-});
-
 // if user is already logged in, redirect to profile page
 document.addEventListener('DOMContentLoaded', async (event) => {
     event.preventDefault();
