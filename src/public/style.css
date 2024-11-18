@@ -332,6 +332,20 @@ main aside{
     border-bottom: var(--text) 2px solid;
 }
 
+.show_more{
+    background-color: var(--main_secondary);
+    color: var(--main);
+    margin-top: 0;
+    border: none;
+    border-top: var(--main) 2px solid;
+    width: 83%;
+}
+
+.show_more:hover{
+    cursor: pointer;
+    background-color: var(--text);
+}
+
 .post_content_display{
     width: 90%;
     height: 80%;

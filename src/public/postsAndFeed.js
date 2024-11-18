@@ -1,14 +1,12 @@
+import { limit } from './profile.js';
+
 const postButton = document.getElementById('post_button');
 const postError = document.getElementById('post_error');
 const feed = document.getElementById('feed');
+let page =1;
 
-postButton.addEventListener('click', (event) => {
-    event.preventDefault(); // prevent default form functionality
-    postThought(); // initiate function to post thought
-});
-
-// get posts function
-async function getPosts() {
+// get posts function with pagination
+async function getPosts(page) {
     const search_bar = document.getElementById('search_bar');
     search_bar.innerHTML = '';
     const search = document.createElement('input');
@@ -18,36 +16,51 @@ async function getPosts() {
     search.id = 'search_feed';
     search_bar.appendChild(search);
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/posts', {
+        const response = await fetch(`http://127.0.0.1:4000/M00982633/posts?page=${page}&limit=${limit}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        if(response.status == 200) {
-        const posts = await response.json();
-        posts.forEach(post => {
-            // create element in the feed
-            const postElement = document.createElement('div');
-            postElement.id = post.postId;
-            postElement.innerHTML = `
-                <h3 class="poster">${post.user}</h3>
-                <p class="post_content_feed">${post.content}</p>
-                <p class="post_date">${post.date}</p>
-            `;
-            // after clicking element in the feed get the post details
-            postElement.addEventListener('click', () => {
-                getPostDetails(postElement.id);
+        if (response.status == 200) {
+            const posts = await response.json();
+            if (page === 1) {
+                feed.innerHTML = ''; // Clear the feed only if it's the first page
+            }
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.id = post.postId;
+                postElement.innerHTML = `
+                    <h3 class="poster">${post.user}</h3>
+                    <p class="post_content_feed">${post.content}</p>
+                    <p class="post_date">${post.date}</p>
+                `;
+                postElement.addEventListener('click', () => {
+                    getPostDetails(postElement.id);
+                });
+                feed.appendChild(postElement);
             });
-            feed.appendChild(postElement);
-        });
+
+            if (posts.length === limit) {
+                const showMoreButton = document.createElement('button');
+                showMoreButton.className = 'show_more';
+                showMoreButton.textContent = 'Show More';
+                showMoreButton.id = page;
+                showMoreButton.addEventListener('click', () => {
+                    document.getElementById(page).remove(); // remove the previous show more button
+                    page++;
+                    getPosts(page);
+                });
+                feed.appendChild(showMoreButton);
+            }
         } else {
             console.log('Error getting posts');
-    }
-    } catch {
-        console.log('Error getting posts');
+        }
+    } catch (error) {
+        console.log('Error getting posts:', error);
     }
 }
+
 
 // get post details function
 async function getPostDetails(postId) {
@@ -122,14 +135,19 @@ async function postThought() {
     postContent.value = "";
     // refresh feed
     feed.innerHTML = '';
+    page = 1;
     getPosts();
 }
 
-
+postButton.addEventListener('click', (event) => {
+    event.preventDefault(); // prevent default form functionality
+    postThought(); // initiate function to post thought
+});
 
 // get posts on page load
 document.addEventListener('DOMContentLoaded', async () => {
-   getPosts();
+    page = 1;
+    getPosts(page);
 });
 
 export { getPosts, getPostDetails, feed };

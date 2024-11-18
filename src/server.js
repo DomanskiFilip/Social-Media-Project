@@ -139,6 +139,7 @@ app.post('/M00982633/login', async (req, res) => {
     }
 });
 
+// GET endpoint to check if user is logged in
 app.get('/M00982633/check-login', (req, res) => {
     if (req.session.username) {
 		console.log('User is logged in:', req.session.username);
@@ -148,6 +149,7 @@ app.get('/M00982633/check-login', (req, res) => {
     }
 });
 
+// POST endpoint to logout user
 app.post('/M00982633/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
@@ -155,6 +157,15 @@ app.post('/M00982633/logout', (req, res) => {
         }
         res.status(200).json({ message: 'Logged out successfully' });
     });
+});
+
+// Endpoint to get the username of the currently logged-in user
+app.get('/M00982633/current-user', (req, res) => {
+    if (req.session.username) {
+        res.status(200).json({ username: req.session.username });
+    } else {
+        res.status(401).json({ error: 'Not logged in' });
+    }
 });
 
 // POST endpoint to post a message
@@ -180,14 +191,15 @@ app.post('/M00982633/posts', async (req, res) => {
     }
 });
 
-// GET endpoint to get all posts
 app.get('/M00982633/posts', async (req, res) => {
-    console.log('Received request at /M00982633/posts');
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 2;
+    const skip = (page - 1) * limit;
+
+    console.log(`Received request at /M00982633/posts?page=${page}&limit=${limit}`);
     try {
         await client.connect();
-
-        // get all posts from database
-        const posts = await postCollection.find().toArray();
+        const posts = await postCollection.find().skip(skip).limit(limit).toArray();
         res.status(200).json(posts);
     } catch (error) {
         console.error('Error getting posts:', error);
@@ -202,9 +214,9 @@ app.get('/M00982633/posts/:postId', async (req, res) => {
     const { postId } = req.params;
     console.log(`Received request at /M00982633/posts/${postId}`);
     try {
-		await client.connect();
+        await client.connect();
         // find the post in the database
-        const post = await postCollection.findOne({ postId: new ObjectId(postId) });
+        const post = await postCollection.findOne({ _id: new ObjectId(postId) });
         if (post) {
             res.status(200).json(post);
         } else {
@@ -213,27 +225,28 @@ app.get('/M00982633/posts/:postId', async (req, res) => {
     } catch (error) {
         console.error('Error getting post details:', error);
         res.status(500).json({ error: 'Failed to get post details' });
+    } finally {
+        await client.close();
     }
-	finally {
-		await client.close();
-	}
 });
 
-// GET endpoint to get all posts by a specific user
 app.get('/M00982633/posts/user/:username', async (req, res) => {
-	const { username } = req.params;
-	console.log(`Received request at /M00982633/posts/user/${username}`);
-	try {
-		await client.connect();
-		// find the posts in the database
-		const posts = await postCollection.find({ user: username }).toArray();
-		res.status(200).json(posts);
-	} catch (error) {
-		console.error('Error getting posts:', error);
-		res.status(500).json({ error: 'Failed to get posts' });
-	} finally {
-		await client.close();
-	}
+    const { username } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 2;
+    const skip = (page - 1) * limit;
+
+    console.log(`Received request at /M00982633/posts/user/${username}?page=${page}&limit=${limit}`);
+    try {
+        await client.connect();
+        const posts = await postCollection.find({ user: username }).skip(skip).limit(limit).toArray();
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error('Error getting posts:', error);
+        res.status(500).json({ error: 'Failed to get posts' });
+    } finally {
+        await client.close();
+    }
 });
 
 // DELETE endpoint to delete a specific post by postId and username
@@ -243,13 +256,11 @@ app.delete('/M00982633/posts/:postId/:username', async (req, res) => {
     try {
         await client.connect();
         // delete the post from the database
-        const result = await postCollection.deleteOne({ postId: new ObjectId(postId), user: username });
+        const result = await postCollection.deleteOne({ _id: new ObjectId(postId), user: username });
         if (result.deletedCount === 1) {
-            console.log('Post deleted successfully');
             res.status(200).json({ message: 'Post deleted' });
         } else {
-            console.log('Failed to delete post');
-            res.status(500).json({ error: 'Failed to delete post' });
+            res.status(404).json({ error: 'Post not found' });
         }
     } catch (error) {
         console.error('Error deleting post:', error);

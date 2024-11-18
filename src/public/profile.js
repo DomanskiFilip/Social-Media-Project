@@ -9,17 +9,53 @@ const myPostsButton = document.getElementById('my_posts');
 const followingButton = document.getElementById('following');
 const logoButton = document.getElementById('logo_button');
 const feedButton = document.getElementById('profile_feed');
-
+let page = 1;
+const limit = 2;
 // after clicking logo get all posts
 logoButton.addEventListener('click', (event) => {
     event.preventDefault();
+    page = 1;
     feed.innerHTML = '';
-    getPosts();
+    getPosts(page);
 });
 
-// if user is already logged in, redirect to profile page
-document.addEventListener('DOMContentLoaded', async (event) => {
+feedButton.addEventListener('click', (event) => {
     event.preventDefault();
+    page = 1;
+    feed.innerHTML = '';
+    getPosts(page);
+});
+
+myPostsButton.addEventListener('click', async () => {
+    console.log('Getting my posts');
+    page = 1;
+    feed.innerHTML = '';
+    checkCurrentUser(page);
+});
+
+// function checking currently login user and getting their posts throu getMyPosts function
+async function checkCurrentUser(page) {
+    try {
+        const response = await fetch('http://127.0.0.1:4000/M00982633/current-user', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.status === 200) {
+            const user_data = await response.json();
+            getMyPosts(user_data.username, page);
+        } else {
+            console.log('Error fetching current user:', response.status);
+        }
+    } catch (error) {
+        console.log('Error fetching current user:', error);
+    }
+}
+
+// automaticly log in user if session is still active
+async function AutoLogIn(){
     try {
         const response = await fetch('http://127.0.0.1:4000/M00982633/check-login', {
             method: 'GET',
@@ -38,6 +74,12 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         console.log('Error checking login status', error);
         loginRegisterScreen.style.display = 'flex';
     }
+}
+
+// if user is already logged in, redirect to profile page
+document.addEventListener('DOMContentLoaded', async (event) => {
+    event.preventDefault();
+    AutoLogIn();
 });
 
 // log out function
@@ -90,15 +132,9 @@ async function deletePost(postId, username) {
     }
 }
 
-// on click get only posts made by logged in user
-myPostsButton.addEventListener('click', () => {
-    console.log('Getting my posts');
-    const user_data = JSON.parse(sessionStorage.getItem('user_data'));
-    getMyPosts(user_data.username);
-});
 
-// function to get only posts made by logged in user
-async function getMyPosts(username) {
+// function to get only posts made by logged in user with pagination
+async function getMyPosts(username, page) {
     const search_bar = document.getElementById('search_bar');
     search_bar.innerHTML = '';
     const search = document.createElement('input');
@@ -108,7 +144,7 @@ async function getMyPosts(username) {
     search.id = 'search_my_posts';
     search_bar.appendChild(search);
     try {
-        const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/user/${username}`, {
+        const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/user/${username}?page=${page}&limit=${limit}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -116,10 +152,10 @@ async function getMyPosts(username) {
         });
         if (response.status == 200) {
             const posts = await response.json();
-            console.log('Posts fetched successfully:', posts);
-            feed.innerHTML = '';
+            if (page === 1) {
+                feed.innerHTML = ''; // Clear the feed only if it's the first page
+            }
             posts.forEach(post => {
-                // create element in the feed
                 const postElement = document.createElement('div');
                 postElement.id = post.postId;
                 postElement.innerHTML = `
@@ -129,17 +165,28 @@ async function getMyPosts(username) {
                     <button class="delete_post">Delete</button>
                 `;
                 const deleteButton = postElement.querySelector('.delete_post');
-                // after clicking element in the feed get the post details
                 postElement.addEventListener('click', () => {
                     getPostDetails(postElement.id);
                 });
-                // button to delete post
                 deleteButton.addEventListener('click', (event) => {
-                    event.stopPropagation(); // prevent triggering the post details event
+                    event.stopPropagation();
                     deletePost(postElement.id, username);
                 });
                 feed.appendChild(postElement);
             });
+
+            if (posts.length === limit) {
+                const showMoreButton = document.createElement('button');
+                showMoreButton.className = 'show_more';
+                showMoreButton.textContent = 'Show More';
+                showMoreButton.id = page;
+                showMoreButton.addEventListener('click', () => {
+                    document.getElementById(page).remove(); // remove the previous show more button
+                    page++;
+                    getMyPosts(username, page);
+                });
+                feed.appendChild(showMoreButton);
+            }
         } else {
             console.log('Error fetching posts:', response.status);
         }
@@ -148,4 +195,4 @@ async function getMyPosts(username) {
     }
 }
 
-year.textContent = new Date().getFullYear();
+export { checkCurrentUser, limit };
