@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -6,7 +5,7 @@ const axios = require('axios');
 const https = require('https');
 const path = require('path'); 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
+const expressSession = require('express-session');
 
 const app = express();
 const PORT = 4000;
@@ -110,6 +109,13 @@ app.post('/M00982633/register', async (req, res) => {
     }
 });
 
+app.use(expressSession({
+	secret: "cst 2120 secret",
+	cookie: { maxAge: 60000 },
+	resave: false,
+	saveUninitialized: true
+}));
+
 // POST endpoint to login user
 app.post('/M00982633/login', async (req, res) => {
     const { username, password } = req.body;
@@ -119,8 +125,9 @@ app.post('/M00982633/login', async (req, res) => {
         await client.connect();
 
         // find user in database
-		const user = await userCollection.findOne({ username: username, password: password });
+        const user = await userCollection.findOne({ username: username, password: password });
         if (user) {
+            req.session.username = username;
             res.status(200).json({ username: username });
         } else {
             res.status(401).json({ error: 'Invalid username or password' });
@@ -133,9 +140,31 @@ app.post('/M00982633/login', async (req, res) => {
     }
 });
 
+app.get('/M00982633/check-login', (req, res) => {
+    if (req.session.username) {
+		console.log('User is logged in:', req.session.username);
+        res.status(200).json({ username: req.session.username });
+    } else {
+        res.status(401).json({ error: 'Not logged in' });
+    }
+});
+
+app.post('/M00982633/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to log out' });
+        }
+        res.status(200).json({ message: 'Logged out successfully' });
+    });
+});
+
 // POST endpoint to post a message
 app.post('/M00982633/posts', async (req, res) => {
-	const { content, date, user } = req.body;
+	if(!express.session.username) {
+		res.status(401).json({ error: 'Unauthorized' });
+		return;
+	}
+	const { content, date} = req.body;
 	const postId = new ObjectId();
 	try {
 		await client.connect();
@@ -167,6 +196,7 @@ app.get('/M00982633/posts', async (req, res) => {
 		await client.close();
 	}
 });
+
 
 // GET endpoint to get a specific post by postId
 app.get('/M00982633/posts/:postId', async (req, res) => {

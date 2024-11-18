@@ -93,7 +93,6 @@ async function postThought() {
     const post = {
         content: postContent.value,
         date: postDate,
-        user: user_data.username,
     };
 
     try {
