@@ -216,7 +216,7 @@ app.get('/M00982633/posts/:postId', async (req, res) => {
     try {
         await client.connect();
         // find the post in the database
-        const post = await postCollection.findOne({ _id: new ObjectId(postId) });
+        const post = await postCollection.findOne({ postId: new ObjectId(postId) });
         if (post) {
             res.status(200).json(post);
         } else {
@@ -250,13 +250,14 @@ app.get('/M00982633/posts/user/:username', async (req, res) => {
 });
 
 // DELETE endpoint to delete a specific post by postId and username
-app.delete('/M00982633/posts/:postId/:username', async (req, res) => {
-    const { postId, username } = req.params;
-    console.log(`Received request at /M00982633/posts/${postId}/${username}`);
+app.delete('/M00982633/posts/:postId', async (req, res) => {
+    const { postId } = req.params;
+    const username = req.session.username;
+    console.log(`Received request at /M00982633/posts/${postId} by user ${username}`);
     try {
         await client.connect();
         // delete the post from the database
-        const result = await postCollection.deleteOne({ _id: new ObjectId(postId), user: username });
+        const result = await postCollection.deleteOne({ postId: new ObjectId(postId), user: username });
         if (result.deletedCount === 1) {
             res.status(200).json({ message: 'Post deleted' });
         } else {

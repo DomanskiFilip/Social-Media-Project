@@ -15,21 +15,18 @@ const limit = 2;
 logoButton.addEventListener('click', (event) => {
     event.preventDefault();
     page = 1;
-    feed.innerHTML = '';
     getPosts(page);
 });
 
 feedButton.addEventListener('click', (event) => {
     event.preventDefault();
     page = 1;
-    feed.innerHTML = '';
     getPosts(page);
 });
 
 myPostsButton.addEventListener('click', async () => {
     console.log('Getting my posts');
     page = 1;
-    feed.innerHTML = '';
     checkCurrentUser(page);
 });
 
@@ -111,19 +108,19 @@ logoutButton.addEventListener('click', () => {
 // self updating year in footer
 year.textContent = new Date().getFullYear();
 
-// function to delete post
-async function deletePost(postId, username) {
-    console.log(`Attempting to delete post with ID: ${postId} for user: ${username}`);
+async function deletePost(postId) {
+    console.log(`Attempting to delete post with ID: ${postId}`);
     try {
-        const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/${postId}/${username}`, {
+        const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include' // Ensure cookies are included in the request
         });
         if (response.status == 200) {
             console.log('Post deleted');
-            getMyPosts(username);
+            checkCurrentUser(1); // Refresh the posts after deletion
         } else {
             console.log(`Error deleting post: ${response.status}`);
         }
@@ -166,11 +163,12 @@ async function getMyPosts(username, page) {
                 `;
                 const deleteButton = postElement.querySelector('.delete_post');
                 postElement.addEventListener('click', () => {
-                    getPostDetails(postElement.id);
+                    let backMarcker = 1;
+                    getPostDetails(postElement.id, backMarcker);
                 });
                 deleteButton.addEventListener('click', (event) => {
                     event.stopPropagation();
-                    deletePost(postElement.id, username);
+                    deletePost(postElement.id);
                 });
                 feed.appendChild(postElement);
             });
@@ -195,4 +193,4 @@ async function getMyPosts(username, page) {
     }
 }
 
-export { checkCurrentUser, limit };
+export { checkCurrentUser, limit, getMyPosts };

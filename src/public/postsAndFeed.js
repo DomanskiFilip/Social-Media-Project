@@ -1,9 +1,9 @@
-import { limit } from './profile.js';
+import { checkCurrentUser, limit, getMyPosts } from './profile.js';
 
 const postButton = document.getElementById('post_button');
 const postError = document.getElementById('post_error');
 const feed = document.getElementById('feed');
-let page =1;
+let page = 1;
 
 // get posts function with pagination
 async function getPosts(page) {
@@ -36,7 +36,8 @@ async function getPosts(page) {
                     <p class="post_date">${post.date}</p>
                 `;
                 postElement.addEventListener('click', () => {
-                    getPostDetails(postElement.id);
+                    let backMarcker = 0;
+                    getPostDetails(postElement.id, backMarcker);
                 });
                 feed.appendChild(postElement);
             });
@@ -63,7 +64,7 @@ async function getPosts(page) {
 
 
 // get post details function
-async function getPostDetails(postId) {
+async function getPostDetails(postId, backMarcker) {
     try {
         const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/${postId}`, {
             method: 'GET',
@@ -89,7 +90,12 @@ async function getPostDetails(postId) {
             const back = document.getElementById('back');
             back.addEventListener('click', () => {
                 feed.innerHTML = ''; // clear the feed
-                getPosts(); // reload the posts
+                if(backMarcker === 0){
+                    getPosts(page); // reload the posts
+                }
+                if(backMarcker === 1){
+                    checkCurrentUser(page); // reload the user's posts
+                }
             });
         } else if (response.status == 404) {
             console.log('Post not found');
