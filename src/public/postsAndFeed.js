@@ -36,7 +36,7 @@ async function getPosts(page) {
                     <p class="post_date">${post.date}</p>
                 `;
                 postElement.addEventListener('click', () => {
-                    let backMarcker = 0;
+                    let backMarcker = 0; // a marker to tell the getPostDetails function that the back button was clicked from the feed
                     getPostDetails(postElement.id, backMarcker);
                 });
                 feed.appendChild(postElement);

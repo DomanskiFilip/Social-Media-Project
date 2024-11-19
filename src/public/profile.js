@@ -163,7 +163,7 @@ async function getMyPosts(username, page) {
                 `;
                 const deleteButton = postElement.querySelector('.delete_post');
                 postElement.addEventListener('click', () => {
-                    let backMarcker = 1;
+                    let backMarcker = 1; // a marker to tell the getPostDetails function that the back button was clicked from the My Posts
                     getPostDetails(postElement.id, backMarcker);
                 });
                 deleteButton.addEventListener('click', (event) => {
