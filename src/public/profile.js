@@ -1,4 +1,4 @@
-import { getPosts, getPostDetails, feed } from './postsAndFeed.js';
+import { getPosts, getPostDetails, feed, limit, searchFeed} from './postsAndFeed.js';
 
 // html elements
 const loginRegisterScreen = document.getElementById('login_register_screen');
@@ -9,26 +9,7 @@ const myPostsButton = document.getElementById('my_posts');
 const followingButton = document.getElementById('following');
 const logoButton = document.getElementById('logo_button');
 const feedButton = document.getElementById('profile_feed');
-let page = 1;
-const limit = 2;
-// after clicking logo get all posts
-logoButton.addEventListener('click', (event) => {
-    event.preventDefault();
-    page = 1;
-    getPosts(page);
-});
-
-feedButton.addEventListener('click', (event) => {
-    event.preventDefault();
-    page = 1;
-    getPosts(page);
-});
-
-myPostsButton.addEventListener('click', async () => {
-    console.log('Getting my posts');
-    page = 1;
-    checkCurrentUser(page);
-});
+let page = 1; // page number for pagination
 
 // function checking currently login user and getting their posts throu getMyPosts function
 async function checkCurrentUser(page) {
@@ -43,6 +24,14 @@ async function checkCurrentUser(page) {
         if (response.status === 200) {
             const user_data = await response.json();
             getMyPosts(user_data.username, page);
+             // if search bar exists, after typing something in search bar, search My Posts
+             const search_my_posts = document.getElementById('search_my_posts'); // search input field
+             if(search_my_posts){
+                search_my_posts.addEventListener('keyup', async (event) => {
+                     page = 1;  // page number for pagination
+                     searchMyPosts(user_data.username, page, event.target.value);
+                 });
+            }
         } else {
             console.log('Error fetching current user:', response.status);
         }
@@ -180,7 +169,7 @@ async function getMyPosts(username, page) {
                 showMoreButton.id = page;
                 showMoreButton.addEventListener('click', () => {
                     document.getElementById(page).remove(); // remove the previous show more button
-                    page++;
+                    page++;  // page number for pagination
                     getMyPosts(username, page);
                 });
                 feed.appendChild(showMoreButton);
@@ -193,4 +182,89 @@ async function getMyPosts(username, page) {
     }
 }
 
-export { checkCurrentUser, limit, getMyPosts };
+
+// search My Posts function
+async function searchMyPosts(username, page, searchValue) {
+    try {
+        const response = await fetch(`http://127.0.0.1:4000/M00982633/search/user/${username}?page=${page}&limit=${limit}&searchValue=${searchValue}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.status == 200) {
+            const posts = await response.json();
+            if (page === 1) {
+                feed.innerHTML = ''; // Clear the feed only if it's the first page
+            }
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.id = post.postId;
+                postElement.innerHTML = `
+                    <h3 class="poster">${post.user}</h3>
+                    <p class="post_content_feed">${post.content}</p>
+                    <p class="post_date">${post.date}</p>
+                <button class="delete_post">Delete</button>
+                `;
+                const deleteButton = postElement.querySelector('.delete_post');
+                postElement.addEventListener('click', () => {
+                    let backMarcker = 1; // a marker to tell the getPostDetails function that the back button was clicked from the feed
+                    getPostDetails(postElement.id, backMarcker);
+                });
+                deleteButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    deletePost(postElement.id);
+                });
+                feed.appendChild(postElement);
+            });
+
+            if (posts.length === limit) {
+                const showMoreButton = document.createElement('button');
+                showMoreButton.className = 'show_more';
+                showMoreButton.textContent = 'Show More';
+                showMoreButton.id = page;
+                showMoreButton.addEventListener('click', () => {
+                    document.getElementById(page).remove(); // remove the previous show more button
+                    page++;  // page number for pagination
+                    searchMyPosts(page, searchValue) ;
+                });
+                feed.appendChild(showMoreButton);
+            }
+        } else {
+            console.log('Error getting posts');
+        }
+    } catch (error) {
+        console.log('Error searching feed:', error);
+    }
+}
+
+// EVENT LISTENERS
+
+// after clicking logo get all posts
+logoButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    page = 1;  // page number for pagination
+    getPosts(page);
+});
+
+feedButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    page = 1;  // page number for pagination
+    getPosts(page);
+     // if search bar exists, after typing something in search bar, search the feed
+     const search = document.getElementById('search_feed'); // search input field
+     if(search){
+         search.addEventListener('keyup', async (event) => {
+             page = 1;  // page number for pagination
+             searchFeed(page, event.target.value);
+         });
+     }
+});
+
+myPostsButton.addEventListener('click', async () => {
+    console.log('Getting my posts');
+    page = 1;  // page number for pagination
+    checkCurrentUser(page);
+});
+
+export { checkCurrentUser, getMyPosts };

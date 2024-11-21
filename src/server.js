@@ -106,7 +106,7 @@ app.post('/M00982633/register', async (req, res) => {
         const newUser = { username: username, password: password };
         const result = await userCollection.insertOne(newUser);
         console.log(result);
-        res.status(201).json({ message: 'User registered successfully' });
+        res.status(200).json({ message: 'User registered successfully' });
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).json({ error: 'Failed to register user' });
@@ -128,8 +128,6 @@ app.post('/M00982633/login', async (req, res) => {
         if (user) {
             req.session.username = username;
             res.status(200).json({ username: username });
-        } else {
-            res.status(401).json({ error: 'Invalid username or password' });
         }
     } catch (error) {
         console.error('Error logging in user:', error);
@@ -145,7 +143,7 @@ app.get('/M00982633/check-login', (req, res) => {
 		console.log('User is logged in:', req.session.username);
         res.status(200).json({ username: req.session.username });
     } else {
-        res.status(401).json({ error: 'Not logged in' });
+        res.status(400).json({ error: 'Not logged in' });
     }
 });
 
@@ -182,7 +180,7 @@ app.post('/M00982633/posts', async (req, res) => {
 
         // insert post into database
         const result = await postCollection.insertOne({ content: content, date: date, user: req.session.username, postId: postId });
-        res.status(201).json({ message: 'Post created successfully' });
+        res.status(200).json({ message: 'Post created successfully' });
     } catch (error) {
         console.error('Error posting message:', error);
         res.status(500).json({ error: 'Failed to post message' });
@@ -266,6 +264,51 @@ app.delete('/M00982633/posts/:postId', async (req, res) => {
     } catch (error) {
         console.error('Error deleting post:', error);
         res.status(500).json({ error: 'Failed to delete post' });
+    } finally {
+        await client.close();
+    }
+});
+
+// get post comapreing content used in search bar
+app.get('/M00982633/search', async (req, res) => {
+    const { searchValue } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 2;
+    const skip = (page - 1) * limit;
+
+    console.log(`Received request at /M00982633/search?searchValue=${searchValue}&page=${page}&limit=${limit}`);
+    try {
+        await client.connect();
+        // search by content case insensitive
+        const posts = await postCollection.find({ content: { $regex: searchValue, $options: 'i' } }).skip(skip).limit(limit).toArray();
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error('Error getting posts:', error);
+        res.status(500).json({ error: 'Failed to get posts' });
+    } finally {
+        await client.close();
+    }
+});
+
+// get post form specific user comapreing content used in search bar
+app.get('/M00982633/search/user/:username', async (req, res) => {
+    const { username } = req.params;
+    const { searchValue } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 2;
+    const skip = (page - 1) * limit;
+
+    console.log(`Received request at /M00982633/search/user/${username}?searchValue=${searchValue}&page=${page}&limit=${limit}`);
+    try {
+        await client.connect();
+        // search by content case insensitive and filter by username
+        const posts = await postCollection.find({
+            user: username,
+            content: { $regex: searchValue, $options: 'i' }}).skip(skip).limit(limit).toArray();
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error('Error searching posts:', error);
+        res.status(500).json({ error: 'Failed to search posts' });
     } finally {
         await client.close();
     }
