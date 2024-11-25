@@ -8,14 +8,24 @@ const limit = 2; // limit of posts per page
 
 // get posts function with pagination to display posts in feed
 async function getPosts(page) {
-    const search_bar = document.getElementById('search_bar');
-    search_bar.innerHTML = '';
-    const search = document.createElement('input');
-    search.type = 'text';
-    search.placeholder = 'Search';
-    search.className = 'search';
-    search.id = 'search_feed';
-    search_bar.appendChild(search);
+    // if search bar exists, after typing something in search bar, search the feed
+    const search_feed = document.getElementById('search_feed'); // search input field
+    if (search_feed) {
+        search_feed.addEventListener('keyup', async (event) => {
+            page = 1;  // page number for pagination
+            searchFeed(page, event.target.value);
+        });
+    } else { // create search bar for general feed
+        const search_bar = document.getElementById('search_bar');
+        search_bar.innerHTML = '';
+        const search = document.createElement('input');
+        search.type = 'text';
+        search.placeholder = 'Search';
+        search.className = 'search';
+        search.id = 'search_feed';
+        search_bar.appendChild(search);
+    }
+    // get posts from the server
     try {
         const response = await fetch(`http://127.0.0.1:4000/M00982633/posts?page=${page}&limit=${limit}`, {
             method: 'GET',
@@ -56,52 +66,167 @@ async function getPosts(page) {
                 feed.appendChild(showMoreButton);
             }
         } else {
-            console.log('Error getting posts');
+            console.log('Error getting posts:', response.status);
         }
     } catch (error) {
         console.log('Error getting posts:', error);
     }
 }
 
-// get post details function to display a single post's details
-async function getPostDetails(postId, backMarcker) {
+// search feed function to search for posts in the feed
+async function searchFeed(page, searchValue) {
     try {
-        const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/${postId}`, {
+        const response = await fetch(`http://127.0.0.1:4000/M00982633/search?page=${page}&limit=${limit}&searchValue=${searchValue}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        if (response.status == 200) {
-            const post = await response.json();
-            feed.innerHTML = ''; // clear the feed
-            const selectedElement = document.createElement('article');
-            selectedElement.innerHTML = `
-                <h3 class="poster">${post.user}</h3>
-                <p class="post_content_display">${post.content}</p>
-                <span id="back">Back</span>
-                <p class="post_date">${post.date}</p>
-            `;
-            feed.appendChild(selectedElement);
 
-            // add event listener to the back button
-            const back = document.getElementById('back');
-            back.addEventListener('click', () => {
-                feed.innerHTML = ''; // clear the feed
-                if (backMarcker === 0) {
-                    getPosts(page); // reload the posts
-                }
-                if (backMarcker === 1) {
-                    checkCurrentUser(page); // reload the user's posts
-                }
+        if (response.status === 200) {
+            const posts = await response.json();
+            if (page === 1) {
+                feed.innerHTML = ''; // Clear the feed only if it's the first page
+            }
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.id = post.postId;
+                postElement.innerHTML = `
+                    <h3 class="poster">${post.user}</h3>
+                    <p class="post_content_feed">${post.content}</p>
+                    <p class="post_date">${post.date}</p>
+                `;
+                postElement.addEventListener('click', () => {
+                    let backMarcker = 0; // a marker to tell the getPostDetails function that the back button was clicked from the feed
+                    getPostDetails(postElement.id, backMarcker);
+                });
+                feed.appendChild(postElement);
             });
-        } else if (response.status == 500) {
-            console.log('Post not found');
+
+            if (posts.length === limit) {
+                const showMoreButton = document.createElement('button');
+                showMoreButton.className = 'show_more';
+                showMoreButton.textContent = 'Show More';
+                showMoreButton.id = page;
+                showMoreButton.addEventListener('click', () => {
+                    document.getElementById(page).remove(); // remove the previous show more button
+                    page++;  // page number for pagination
+                    searchFeed(page, searchValue);
+                });
+                feed.appendChild(showMoreButton);
+            }
+        } else if (response.status === 401) {
+            // Redirect to login screen if unauthorized
+            window.location.href = '/login';
         } else {
-            console.log('Error getting post details');
+            console.log('Error getting posts:', response.status);
         }
     } catch (error) {
-        console.log('Error getting post details', error);
+        console.log('Error fetching current user:', error);
+    }
+}
+
+
+// get post details function to display a single post's details
+async function getPostDetails(postId, backMarcker) {
+    // check current user for following functionality
+    try {
+        const response = await fetch('http://127.0.0.1:4000/M00982633/current-user', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.status === 200) {
+            const user_data = await response.json();
+            try {
+                const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/${postId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.status == 200) {
+                    const post = await response.json();
+                    feed.innerHTML = ''; // clear the feed
+                    const selectedElement = document.createElement('article');
+                    selectedElement.innerHTML = `
+                        <h3 class="poster">${post.user}</h3>
+                        <button class="poster follow">follow/unfollow</button>
+                        <p class="post_content_display">${post.content}</p>
+                        <span id="back">Back</span>
+                        <p class="post_date">${post.date}</p>
+                    `;
+                    feed.appendChild(selectedElement);
+
+                    // follow button functionality
+                    const followButton = selectedElement.querySelector('.follow');
+                    if (followButton) {
+                        // Check if the current user follows the post's author
+                        const followResponse = await fetch(`http://127.0.0.1:4000/M00982633/follows/${post.user}`, {
+                            method: 'GET',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        const followData = await followResponse.json();
+                        let isFollowing = followData.follows;
+                        followButton.innerHTML = isFollowing ? `Unfollow ${post.user}` : `Follow ${post.user}`;
+
+                        followButton.addEventListener('click', async () => {
+                            followButton.disabled = true; // Disable the button
+
+                            const response = await followed(user_data.username, post.user);
+                            if (response.message === 'User followed successfully') {
+                                followButton.innerHTML = `Unfollow ${post.user}`;
+                                isFollowing = true;
+                            } else if (response.message === 'User unfollowed successfully') {
+                                followButton.innerHTML = `Follow ${post.user}`;
+                                isFollowing = false;
+                            } else if (response.message === 'You cannot follow yourself') {
+                                followButton.innerHTML = 'You cannot follow yourself';
+                            } else {
+                                followButton.innerHTML = 'Error';
+                            }
+
+                            setTimeout(() => {
+                                followButton.innerHTML = isFollowing ? `Unfollow ${post.user}` : `Follow ${post.user}`;
+                                followButton.disabled = false; // Re-enable the button after 2 seconds
+                            }, 2000);
+                        });
+                    }
+
+                    // add event listener to the back button
+                    const back = selectedElement.querySelector('#back');
+                    if (back) {
+                        back.addEventListener('click', () => {
+                            feed.innerHTML = ''; // clear the feed
+                            if (backMarcker === 0) {
+                                getPosts(page); // reload the posts
+                            }
+                            if (backMarcker === 1) {
+                                checkCurrentUser(page); // reload the user's posts
+                            }
+                            if (backMarcker === 2) {
+                                getFollowingPosts(page)// reload the user's posts
+                            }
+                        });
+                    }
+                } else if (response.status == 500) {
+                    console.log('Post not found');
+                } else {
+                    console.log('Error getting post details');
+                }
+            } catch (error) {
+                console.log('Error getting post details', error);
+            }
+        } else {
+            console.log('Error getting current user:', response.status);
+        }
+    } catch (error) {
+        console.log('Error getting current user:', error);
     }
 }
 
@@ -143,55 +268,58 @@ async function postThought() {
     getPosts(page);
 }
 
-// search feed function
-async function searchFeed(page, searchValue) {
+// follow function to follow or unfollow a user
+async function followed(follower, followed) {
     try {
-        const response = await fetch(`http://127.0.0.1:4000/M00982633/search?page=${page}&limit=${limit}&searchValue=${searchValue}`, {
-            method: 'GET',
+        const response = await fetch('http://127.0.0.1:4000/M00982633/follow', {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({ follower, followed }),
+            credentials: 'include' // Ensure cookies are included in the request
         });
-        if (response.status == 200) {
-            const posts = await response.json();
-            if (page === 1) {
-                feed.innerHTML = ''; // Clear the feed only if it's the first page
-            }
-            posts.forEach(post => {
-                const postElement = document.createElement('div');
-                postElement.id = post.postId;
-                postElement.innerHTML = `
-                    <h3 class="poster">${post.user}</h3>
-                    <p class="post_content_feed">${post.content}</p>
-                    <p class="post_date">${post.date}</p>
-                `;
-                postElement.addEventListener('click', () => {
-                    let backMarcker = 0; // a marker to tell the getPostDetails function that the back button was clicked from the feed
-                    getPostDetails(postElement.id, backMarcker);
-                });
-                feed.appendChild(postElement);
-            });
 
-            if (posts.length === limit) {
-                const showMoreButton = document.createElement('button');
-                showMoreButton.className = 'show_more';
-                showMoreButton.textContent = 'Show More';
-                showMoreButton.id = page;
-                showMoreButton.addEventListener('click', () => {
-                    document.getElementById(page).remove(); // remove the previous show more button
-                    page++;  // page number for pagination
-                    searchFeed(page, searchValue) ;
-                });
-                feed.appendChild(showMoreButton);
-            }
+        const result = await response.json();
+        if (response.status === 200) {
+            console.log(result.message);
+            return { message: result.message };
+        } else if (response.status === 400 && result.error === 'You cannot follow yourself') {
+            console.log(result.error);
+            return { message: result.error };
         } else {
-            console.log('Error getting posts');
+            console.log('Error following/unfollowing user:', response.status);
+            return { message: 'Error' };
         }
     } catch (error) {
-        console.log('Error searching feed:', error);
+        console.log('Error following/unfollowing user:', error);
+        return { message: 'Error' };
     }
 }
 
+// Initialize search bar
+function initializeSearchBar() {
+    const search_feed = document.getElementById('search_feed'); // search input field
+    if (search_feed) {
+        search_feed.addEventListener('keyup', async (event) => {
+            page = 1;  // page number for pagination
+            await searchFeed(page, event.target.value);
+        });
+    } else { // create search bar for general feed
+        const search_bar = document.getElementById('search_bar');
+        search_bar.innerHTML = '';
+        const search = document.createElement('input');
+        search.type = 'text';
+        search.placeholder = 'Search';
+        search.className = 'search';
+        search.id = 'search_feed';
+        search_bar.appendChild(search);
+        search.addEventListener('keyup', async (event) => {
+            page = 1;  // page number for pagination
+            await searchFeed(page, event.target.value);
+        });
+    }
+}
 
 // EVENT LISTENERS
 
@@ -204,15 +332,8 @@ postButton.addEventListener('click', (event) => {
 // get posts on page load
 document.addEventListener('DOMContentLoaded', async () => {
     page = 1;  // page number for pagination
+    initializeSearchBar(); // initialize search bar to ensure responsive behaviour
     getPosts(page);
-    // if search bar exists, after typing something in search bar, search the feed
-    const search = document.getElementById('search_feed'); // search input field
-    if(search){
-        search.addEventListener('keyup', async (event) => {
-            page = 1;  // page number for pagination
-            searchFeed(page, event.target.value);
-        });
-    }
 });
 
 

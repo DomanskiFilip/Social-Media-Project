@@ -96,7 +96,7 @@ app.post('/M00982633/register', async (req, res) => {
     try {
         await client.connect();
         
-         // Check if the username already exists
+        // Check if the username already exists
         const existingUser = await userCollection.findOne({ username: username });
         if (existingUser) {
             res.status(409).json({ message: 'Username already taken' });
@@ -106,7 +106,7 @@ app.post('/M00982633/register', async (req, res) => {
         const newUser = { username: username, password: password };
         const result = await userCollection.insertOne(newUser);
         console.log(result);
-        res.status(200).json({ message: 'User registered successfully' });
+        res.status(201).json({ message: 'User registered successfully' }); // Change status code to 201
     } catch (error) {
         console.error('Error registering user:', error);
         res.status(500).json({ error: 'Failed to register user' });
@@ -128,6 +128,8 @@ app.post('/M00982633/login', async (req, res) => {
         if (user) {
             req.session.username = username;
             res.status(200).json({ username: username });
+        } else {
+            res.status(401).json({ error: 'Invalid username or password' });
         }
     } catch (error) {
         console.error('Error logging in user:', error);
@@ -279,8 +281,13 @@ app.get('/M00982633/search', async (req, res) => {
     console.log(`Received request at /M00982633/search?searchValue=${searchValue}&page=${page}&limit=${limit}`);
     try {
         await client.connect();
-        // search by content case insensitive
-        const posts = await postCollection.find({ content: { $regex: searchValue, $options: 'i' } }).skip(skip).limit(limit).toArray();
+        // search by content and/or username case insensitive
+        const posts = await postCollection.find({
+            $or: [
+                { content: { $regex: searchValue, $options: 'i' } },
+                { user: { $regex: searchValue, $options: 'i' } }
+            ]
+        }).skip(skip).limit(limit).toArray();
         res.status(200).json(posts);
     } catch (error) {
         console.error('Error getting posts:', error);
@@ -309,6 +316,102 @@ app.get('/M00982633/search/user/:username', async (req, res) => {
     } catch (error) {
         console.error('Error searching posts:', error);
         res.status(500).json({ error: 'Failed to search posts' });
+    } finally {
+        await client.close();
+    }
+});
+
+// POST endpoint to follow or unfollow a user
+app.post('/M00982633/follow', async (req, res) => {
+    const { follower, followed } = req.body;
+    console.log(`Received request to follow/unfollow user: ${followed} by ${follower}`);
+
+    // Check if the follower is trying to follow themselves
+    if (follower === followed) {
+        return res.status(400).json({ error: 'You cannot follow yourself' });
+    }
+
+    try {
+        await client.connect();
+        // Check if the user is already followed
+        const user = await userCollection.findOne({ username: follower, following: followed });
+        let result;
+        if (user) {
+            // User is already followed, so unfollow them
+            result = await userCollection.updateOne(
+                { username: follower },
+                { $pull: { following: followed } }
+            );
+            if (result.modifiedCount === 1) {
+                res.status(200).json({ message: 'User unfollowed successfully' });
+            } else {
+                res.status(404).json({ error: 'Follower not found' });
+            }
+        } else {
+            // User is not followed, so follow them
+            result = await userCollection.updateOne(
+                { username: follower },
+                { $addToSet: { following: followed } } // Add to set to avoid duplicates
+            );
+            if (result.modifiedCount === 1) {
+                res.status(200).json({ message: 'User followed successfully' });
+            } else {
+                res.status(404).json({ error: 'Follower not found' });
+            }
+        }
+    } catch (error) {
+        console.error('Error following/unfollowing user:', error);
+        res.status(500).json({ error: 'Failed to follow/unfollow user' });
+    } finally {
+        await client.close();
+    }
+});
+
+// Endpoint to check if the current user follows a specific user
+app.get('/M00982633/follows/:username', async (req, res) => {
+    const currentUser = req.session.username;
+    const { username } = req.params;
+
+    if (!currentUser) {
+        return res.status(401).json({ error: 'Not logged in' });
+    }
+
+    try {
+        await client.connect();
+        const user = await userCollection.findOne({ username: currentUser, following: username });
+        if (user) {
+            res.status(200).json({ follows: true });
+        } else {
+            res.status(200).json({ follows: false });
+        }
+    } catch (error) {
+        console.error('Error checking if user follows:', error);
+        res.status(500).json({ error: 'Failed to check if user follows' });
+    } finally {
+        await client.close();
+    }
+});
+
+// GET endpoint to get the posts of users that the current user is following
+app.get('/M00982633/following', async (req, res) => {
+    const username = req.session.username;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 2;
+    const skip = (page - 1) * limit;
+
+    console.log(`Received request at /M00982633/following by user?page=${page}&limit=${limit}`);
+    try {
+        await client.connect();
+        const user = await userCollection.findOne({ username: username });
+        if (!user || !Array.isArray(user.following)) {
+            return res.status(404).json({ error: 'User not found or following list is empty' });
+        }
+        // get posts from users that the current user is following, excluding the logged-in user's posts
+        const posts = await postCollection.find({ user: { $in: user.following } }).skip(skip).limit(limit).toArray();
+        res.status(200).json(posts);
+    } catch (error) {
+        console.error('Error getting posts from following users:', error);
+        res.status(500).json({ error: 'Failed to get posts from following users' });
     } finally {
         await client.close();
     }

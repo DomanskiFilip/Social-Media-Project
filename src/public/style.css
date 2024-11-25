@@ -86,6 +86,14 @@ html, body{
     text-shadow: var(--main_shadow) 0px 0px 10px;
 }
 
+#login_button:hover{
+    cursor: pointer;
+}
+
+#register_button:hover{
+    cursor: pointer;
+}
+
 /*header*/
 header{
     width: 100%;
@@ -252,7 +260,7 @@ main aside{
     cursor: pointer;
 }
 
-/*main section #main*/
+/*main section #main, feed and posts*/
 #main{
     display: flex;
     flex-direction: column;
@@ -372,6 +380,22 @@ main aside{
 
 .post_date{
     align-self: center;
+}
+
+#feed article .follow {
+    background-color: var(--main);
+    color: var(--main_secondary);
+    border-radius: 10px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border: 1px solid var(--main_secondary);
+    font-size: 1rem;
+    text-transform: uppercase;
+}
+
+.follow:hover{
+    cursor: pointer;
 }
 
 #back {

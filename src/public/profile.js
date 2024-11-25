@@ -24,14 +24,6 @@ async function checkCurrentUser(page) {
         if (response.status === 200) {
             const user_data = await response.json();
             getMyPosts(user_data.username, page);
-             // if search bar exists, after typing something in search bar, search My Posts
-             const search_my_posts = document.getElementById('search_my_posts'); // search input field
-             if(search_my_posts){
-                search_my_posts.addEventListener('keyup', async (event) => {
-                     page = 1;  // page number for pagination
-                     searchMyPosts(user_data.username, page, event.target.value);
-                 });
-            }
         } else {
             console.log('Error fetching current user:', response.status);
         }
@@ -121,14 +113,23 @@ async function deletePost(postId) {
 
 // function to get only posts made by logged in user with pagination
 async function getMyPosts(username, page) {
-    const search_bar = document.getElementById('search_bar');
-    search_bar.innerHTML = '';
-    const search = document.createElement('input');
-    search.type = 'text';
-    search.placeholder = 'Search';
-    search.className = 'search';
-    search.id = 'search_my_posts';
-    search_bar.appendChild(search);
+    // if search bar exists, after typing something in search bar, search the feed
+    const search_my_feed = document.getElementById('search_my_posts'); // search input field
+    if (search_my_feed) {
+        search_my_feed.addEventListener('keyup', async (event) => {
+            page = 1;  // page number for pagination
+            searchMyPosts(username, page, event.target.value);
+        });
+    } else { // create search bar for user's posts
+        const search_bar = document.getElementById('search_bar');
+        search_bar.innerHTML = '';
+        const search = document.createElement('input');
+        search.type = 'text';
+        search.placeholder = 'Search';
+        search.className = 'search';
+        search.id = 'search_my_posts';
+        search_bar.appendChild(search);
+    }
     try {
         const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/user/${username}?page=${page}&limit=${limit}`, {
             method: 'GET',
@@ -238,6 +239,81 @@ async function searchMyPosts(username, page, searchValue) {
     }
 }
 
+// function to get posts from user's following list
+async function getFollowingPosts(page) {
+    // confirm logged in user information
+    try {
+        const response = await fetch('http://127.0.0.1:4000/M00982633/current-user', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.status === 200) {
+            const user_data = await response.json();
+            // get posts from user's following list
+            try {
+                const response = await fetch(`http://127.0.0.1:4000/M00982633/following?page=${page}&limit=${limit}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.status === 200) {
+                    const posts = await response.json();
+                    if (page === 1) {
+                        feed.innerHTML = ''; // Clear the feed only if it's the first page
+                    }
+                    if (posts.length === 0 && page === 1) {
+                        feed.innerHTML = '<p>No posts to display</p>'; // Show message if no posts
+                    } else {
+                        posts.forEach(post => {
+                            const postElement = document.createElement('div');
+                            postElement.id = post.postId;
+                            postElement.innerHTML = `
+                                <h3 class="poster">${post.user}</h3>
+                                <p class="post_content_feed">${post.content}</p>
+                                <p class="post_date">${post.date}</p>
+                            `;
+                            postElement.addEventListener('click', () => {
+                                let backMarcker = 2; // a marker to tell the getPostDetails function that the back button was clicked from the feed
+                                getPostDetails(postElement.id, backMarcker);
+                            });
+                            feed.appendChild(postElement);
+                        });
+
+                        if (posts.length === limit) {
+                            const showMoreButton = document.createElement('button');
+                            showMoreButton.className = 'show_more';
+                            showMoreButton.textContent = 'Show More';
+                            showMoreButton.id = `show_more_${page}`;
+                            showMoreButton.addEventListener('click', () => {
+                                document.getElementById(`show_more_${page}`).remove(); // remove the previous show more button
+                                page++;  // page number for pagination
+                                getFollowingPosts(page);
+                            });
+                            feed.appendChild(showMoreButton);
+                        }
+                    }
+                } else if (response.status === 404) {
+                    if (page === 1) {
+                        feed.innerHTML = '<p>No posts to display</p>'; // Show message if no posts
+                    }
+                } else {
+                    console.log('Error getting following posts:', response.status);
+                }
+            } catch (error) {
+                console.log('Error getting following posts:', error);
+            }
+        } else {
+            console.log('Error fetching current user:', response.status);
+        }
+    } catch (error) {
+        console.log('Error fetching current user:', error);
+    }
+}
+
 // EVENT LISTENERS
 
 // after clicking logo get all posts
@@ -251,20 +327,19 @@ feedButton.addEventListener('click', (event) => {
     event.preventDefault();
     page = 1;  // page number for pagination
     getPosts(page);
-     // if search bar exists, after typing something in search bar, search the feed
-     const search = document.getElementById('search_feed'); // search input field
-     if(search){
-         search.addEventListener('keyup', async (event) => {
-             page = 1;  // page number for pagination
-             searchFeed(page, event.target.value);
-         });
-     }
 });
 
 myPostsButton.addEventListener('click', async () => {
     console.log('Getting my posts');
     page = 1;  // page number for pagination
     checkCurrentUser(page);
+});
+
+// get posts form user's following list
+followingButton.addEventListener('click', async () => {
+    console.log('Getting following posts');
+    page = 1;  // page number for pagination
+    getFollowingPosts(page);
 });
 
 export { checkCurrentUser, getMyPosts };

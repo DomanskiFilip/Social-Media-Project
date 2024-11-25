@@ -101,8 +101,10 @@ async function loginUser() {
             profileName.textContent = user_data.username;
             profileName.title = user_data.username;
             loginRegisterScreen.style.display = 'none';
-        } else {
+        } else if (response.status === 401) {
             loginError.innerHTML = "Invalid username or password";
+        } else {
+            loginError.innerHTML = "Please try again";
         }
     } catch (error) {
         loginError.innerHTML = "Please try again";
