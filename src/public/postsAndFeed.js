@@ -155,6 +155,7 @@ async function getPostDetails(postId, backMarcker) {
                         <h3 class="poster">${post.user}</h3>
                         <button class="poster follow">follow/unfollow</button>
                         <p class="post_content_display">${post.content}</p>
+                        ${post.image ? `<img src="/${post.image.replace(/\\/g, '/')}" alt="Post Image" class="post_image">` : ''}
                         <span id="back">Back</span>
                         <p class="post_date">${post.date}</p>
                     `;
@@ -210,7 +211,7 @@ async function getPostDetails(postId, backMarcker) {
                                 checkCurrentUser(page); // reload the user's posts
                             }
                             if (backMarcker === 2) {
-                                getFollowingPosts(page)// reload the user's posts
+                                getFollowingPosts(page); // reload the user's posts
                             }
                         });
                     }
@@ -233,6 +234,7 @@ async function getPostDetails(postId, backMarcker) {
 // post thought function for posting a message/post
 async function postThought() {
     let postContent = document.getElementById('post_content');
+    let postImage = document.getElementById('post_image').files[0];
     const postDate = new Date().toISOString();
 
     if (postContent.value === "") {
@@ -240,18 +242,17 @@ async function postThought() {
         return;
     }
 
-    const post = {
-        content: postContent.value,
-        date: postDate,
-    };
+    const formData = new FormData();
+    formData.append('content', postContent.value);
+    formData.append('date', postDate);
+    if (postImage) {
+        formData.append('image', postImage);
+    }
 
     try {
         const response = await fetch('http://127.0.0.1:4000/M00982633/posts', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(post),
+            body: formData,
             credentials: 'include' // Ensure cookies are included in the request
         });
         // check if post was created successfully
@@ -262,6 +263,7 @@ async function postThought() {
 
     // clear input field
     postContent.value = "";
+    document.getElementById('post_image').value = "";
     // refresh feed
     feed.innerHTML = '';
     page = 1;  // page number for pagination

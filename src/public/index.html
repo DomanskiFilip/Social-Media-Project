@@ -68,12 +68,14 @@
 
         <!-- post section on the rigth-->
         <aside id="post_section">
-            <Form id="post_form">
+            <form id="post_form" enctype="multipart/form-data">
                 <h2>POST</h2>
                 <textarea name="post_content" id="post_content" placeholder="What's on your mind?" maxlength="300"></textarea>
+                <label for="post_image">add an image:</label>
+                <input type="file" id="post_image" name="post_image" accept="image/*">
                 <span id="post_error"></span>
                 <button type="submit" id="post_button">POST</button>
-            </Form>
+            </form>
         </aside>
     </main>
 

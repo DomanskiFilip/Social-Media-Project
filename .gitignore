@@ -6,6 +6,9 @@ node_modules/
 /.pnp
 .pnp.js
 .npm
+/uploads
+/uploads/
+/uploads/*
 
 # database
 /PortableMongoDB_6.0

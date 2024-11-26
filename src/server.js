@@ -6,6 +6,9 @@ const https = require('https');
 const path = require('path'); 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const expressSession = require('express-session');
+const multer = require('multer'); // multer for uploading images
+const upload = multer({ dest: 'uploads/' }); // Configure the upload destination
+
 
 const app = express();
 const PORT = 4000;
@@ -14,9 +17,12 @@ app.use(cors());
 app.use(express.json());
 // serve static files like index.html to localhos
 app.use(express.static(path.join(__dirname, '../src/public')));
+// upload path for uploading images
+app.use('/uploads', express.static(path.join(__dirname, '../src/uploads')));
 // send to server
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
 
 app.use(expressSession({
     secret: "cst 2120 secret",
@@ -169,19 +175,21 @@ app.get('/M00982633/current-user', (req, res) => {
 });
 
 // POST endpoint to post a message
-app.post('/M00982633/posts', async (req, res) => {
-    if(!req.session.username) {
+app.post('/M00982633/posts', upload.single('image'), async (req, res) => {
+    if (!req.session.username) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
     }
 
     const { content, date } = req.body;
     const postId = new ObjectId();
+    const imagePath = req.file ? req.file.path : null; // Save the image path if an image was uploaded
+
     try {
         await client.connect();
 
         // insert post into database
-        const result = await postCollection.insertOne({ content: content, date: date, user: req.session.username, postId: postId });
+        const result = await postCollection.insertOne({ content: content, date: date, user: req.session.username, postId: postId, image: imagePath });
         res.status(200).json({ message: 'Post created successfully' });
     } catch (error) {
         console.error('Error posting message:', error);

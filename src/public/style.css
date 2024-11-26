@@ -256,6 +256,12 @@ main aside{
     margin-bottom: 1rem;
 }
 
+.post_image {
+    max-width: 100%;
+    height: auto;
+    margin-top: 1rem;
+}
+
 #post_section form button:hover{
     cursor: pointer;
 }
@@ -324,7 +330,7 @@ main aside{
 
 #feed article{
     width: 80%;
-    height: 100%;
+
     border: var(--main_secondary) 2px solid;
     color: var(--text);
     display: flex;
