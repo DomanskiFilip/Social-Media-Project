@@ -247,6 +247,24 @@ main aside{
     resize: none;
 }
 
+#post_section form input[type="file"]{
+    width: 80%;
+    background-color: var(--main);
+    color: var(--text);
+    border-radius: 10px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+#post_section form input[type="file"]::file-selector-button{
+    background-color: var(--main);
+    color: var(--text);
+}
+
+#post_section form input[type="file"]::file-selector-button:hover{
+    cursor: pointer;
+}
+
 #post_button{
     width: 80%;
     background-color: var(--main);
