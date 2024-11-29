@@ -1,4 +1,4 @@
-import { checkCurrentUser } from './profile.js';
+import { checkCurrentUser, getFollowingPosts } from './profile.js';
 
 const postButton = document.getElementById('post_button');
 const postError = document.getElementById('post_error');
@@ -8,26 +8,11 @@ const limit = 2; // limit of posts per page
 
 // get posts function with pagination to display posts in feed
 async function getPosts(page) {
-    // if search bar exists, after typing something in search bar, search the feed
-    const search_feed = document.getElementById('search_feed'); // search input field
-    if (search_feed) {
-        search_feed.addEventListener('keyup', async (event) => {
-            page = 1;  // page number for pagination
-            searchFeed(page, event.target.value);
-        });
-    } else { // create search bar for general feed
-        const search_bar = document.getElementById('search_bar');
-        search_bar.innerHTML = '';
-        const search = document.createElement('input');
-        search.type = 'text';
-        search.placeholder = 'Search';
-        search.className = 'search';
-        search.id = 'search_feed';
-        search_bar.appendChild(search);
-    }
+    // initialize search bar
+    initializeSearchBar();
     // get posts from the server
     try {
-        const response = await fetch(`http://127.0.0.1:4000/M00982633/posts?page=${page}&limit=${limit}`, {
+        const response = await fetch(`http://127.0.0.1:8080/M00982633/contents?page=${page}&limit=${limit}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -76,7 +61,7 @@ async function getPosts(page) {
 // search feed function to search for posts in the feed
 async function searchFeed(page, searchValue) {
     try {
-        const response = await fetch(`http://127.0.0.1:4000/M00982633/search?page=${page}&limit=${limit}&searchValue=${searchValue}`, {
+        const response = await fetch(`http://127.0.0.1:8080/M00982633/search?page=${page}&limit=${limit}&searchValue=${searchValue}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -131,7 +116,7 @@ async function searchFeed(page, searchValue) {
 async function getPostDetails(postId, backMarcker) {
     // check current user for following functionality
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/current-user', {
+        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -141,7 +126,7 @@ async function getPostDetails(postId, backMarcker) {
         if (response.status === 200) {
             const user_data = await response.json();
             try {
-                const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/${postId}`, {
+                const response = await fetch(`http://127.0.0.1:8080/M00982633/contents/${postId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -165,7 +150,7 @@ async function getPostDetails(postId, backMarcker) {
                     const followButton = selectedElement.querySelector('.follow');
                     if (followButton) {
                         // Check if the current user follows the post's author
-                        const followResponse = await fetch(`http://127.0.0.1:4000/M00982633/follows/${post.user}`, {
+                        const followResponse = await fetch(`http://127.0.0.1:8080/M00982633/follow/${post.user}`, {
                             method: 'GET',
                             credentials: 'include',
                             headers: {
@@ -179,7 +164,8 @@ async function getPostDetails(postId, backMarcker) {
                         followButton.addEventListener('click', async () => {
                             followButton.disabled = true; // Disable the button
 
-                            const response = await followed(user_data.username, post.user);
+                            const action = isFollowing ? 'unfollow' : 'follow';
+                            const response = await followed(user_data.username, post.user, action);
                             if (response.message === 'User followed successfully') {
                                 followButton.innerHTML = `Unfollow ${post.user}`;
                                 isFollowing = true;
@@ -193,7 +179,6 @@ async function getPostDetails(postId, backMarcker) {
                             }
 
                             setTimeout(() => {
-                                followButton.innerHTML = isFollowing ? `Unfollow ${post.user}` : `Follow ${post.user}`;
                                 followButton.disabled = false; // Re-enable the button after 2 seconds
                             }, 2000);
                         });
@@ -218,7 +203,7 @@ async function getPostDetails(postId, backMarcker) {
                 } else if (response.status == 500) {
                     console.log('Post not found');
                 } else {
-                    console.log('Error getting post details');
+                    console.log('Error getting post details:', response.status);
                 }
             } catch (error) {
                 console.log('Error getting post details', error);
@@ -250,7 +235,7 @@ async function postThought() {
     }
 
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/posts', {
+        const response = await fetch('http://127.0.0.1:8080/M00982633/contents', {
             method: 'POST',
             body: formData,
             credentials: 'include' // Ensure cookies are included in the request
@@ -271,10 +256,10 @@ async function postThought() {
 }
 
 // follow function to follow or unfollow a user
-async function followed(follower, followed) {
+async function followed(follower, followed, action) {
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/follow', {
-            method: 'POST',
+        const response = await fetch('http://127.0.0.1:8080/M00982633/follow', {
+            method: action === 'follow' ? 'POST' : 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -340,4 +325,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 // export functions
-export { getPosts, getPostDetails, feed, limit, searchFeed };
+export { getPosts, getPostDetails, feed, limit, searchFeed};

@@ -11,7 +11,7 @@ const upload = multer({ dest: 'uploads/' }); // Configure the upload destination
 
 
 const app = express();
-const PORT = 4000;
+const PORT = 8080;
 
 app.use(cors());
 app.use(express.json());
@@ -32,7 +32,7 @@ app.use(expressSession({
 }));
 
 // Define a route to get air quality data to show at the top of the page
-app.get('/weather', (req, res) => {
+app.get('/M00982633/weather', (req, res) => {
 	const https = require('https');
   
 	const options = {
@@ -95,7 +95,7 @@ const userCollection = db.collection('users');
 const postCollection = db.collection('posts');
 
 // POST endpoint to register user
-app.post('/M00982633/register', async (req, res) => {
+app.post('/M00982633/users', async (req, res) => {
     const { username, password } = req.body;
     console.log('Received request at /M00982633/register:', username);
 
@@ -146,7 +146,7 @@ app.post('/M00982633/login', async (req, res) => {
 });
 
 // GET endpoint to check if user is logged in
-app.get('/M00982633/check-login', (req, res) => {
+app.get('/M00982633/login', (req, res) => {
     if (req.session.username) {
 		console.log('User is logged in:', req.session.username);
         res.status(200).json({ username: req.session.username });
@@ -155,8 +155,8 @@ app.get('/M00982633/check-login', (req, res) => {
     }
 });
 
-// POST endpoint to logout user
-app.post('/M00982633/logout', (req, res) => {
+// DELETE endpoint to logout user
+app.delete('/M00982633/login', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             return res.status(500).json({ error: 'Failed to log out' });
@@ -165,17 +165,8 @@ app.post('/M00982633/logout', (req, res) => {
     });
 });
 
-// Endpoint to get the username of the currently logged-in user
-app.get('/M00982633/current-user', (req, res) => {
-    if (req.session.username) {
-        res.status(200).json({ username: req.session.username });
-    } else {
-        res.status(401).json({ error: 'Not logged in' });
-    }
-});
-
 // POST endpoint to post a message
-app.post('/M00982633/posts', upload.single('image'), async (req, res) => {
+app.post('/M00982633/contents', upload.single('image'), async (req, res) => {
     if (!req.session.username) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -199,12 +190,12 @@ app.post('/M00982633/posts', upload.single('image'), async (req, res) => {
     }
 });
 
-app.get('/M00982633/posts', async (req, res) => {
+app.get('/M00982633/contents', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    console.log(`Received request at /M00982633/posts?page=${page}&limit=${limit}`);
+    console.log(`Received request at /M00982633/contents?page=${page}&limit=${limit}`);
     try {
         await client.connect();
         const posts = await postCollection.find().skip(skip).limit(limit).toArray();
@@ -218,9 +209,15 @@ app.get('/M00982633/posts', async (req, res) => {
 });
 
 // GET endpoint to get a specific post by postId
-app.get('/M00982633/posts/:postId', async (req, res) => {
+app.get('/M00982633/contents/:postId', async (req, res) => {
     const { postId } = req.params;
-    console.log(`Received request at /M00982633/posts/${postId}`);
+    console.log(`Received request at /M00982633/contents/${postId}`);
+
+    // Validate postId
+    if (!ObjectId.isValid(postId)) {
+        return res.status(400).json({ error: 'Invalid postId format' });
+    }
+
     try {
         await client.connect();
         // find the post in the database
@@ -238,13 +235,13 @@ app.get('/M00982633/posts/:postId', async (req, res) => {
     }
 });
 
-app.get('/M00982633/posts/user/:username', async (req, res) => {
+app.get('/M00982633/contents/user/:username', async (req, res) => {
     const { username } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    console.log(`Received request at /M00982633/posts/user/${username}?page=${page}&limit=${limit}`);
+    console.log(`Received request at /M00982633/contents/user/${username}?page=${page}&limit=${limit}`);
     try {
         await client.connect();
         const posts = await postCollection.find({ user: username }).skip(skip).limit(limit).toArray();
@@ -258,10 +255,10 @@ app.get('/M00982633/posts/user/:username', async (req, res) => {
 });
 
 // DELETE endpoint to delete a specific post by postId and username
-app.delete('/M00982633/posts/:postId', async (req, res) => {
+app.delete('/M00982633/contents/:postId', async (req, res) => {
     const { postId } = req.params;
     const username = req.session.username;
-    console.log(`Received request at /M00982633/posts/${postId} by user ${username}`);
+    console.log(`Received request at /M00982633/contents/${postId} by user ${username}`);
     try {
         await client.connect();
         // delete the post from the database
@@ -286,7 +283,11 @@ app.get('/M00982633/search', async (req, res) => {
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    console.log(`Received request at /M00982633/search?searchValue=${searchValue}&page=${page}&limit=${limit}`);
+    if (!searchValue) {
+        return res.status(300).json({ error: 'searchValue is required' });
+    }
+
+    console.log(`Received request at /M00982633/contents/search?searchValue=${encodeURIComponent(searchValue)}&page=${page}&limit=${limit}`);
     try {
         await client.connect();
         // search by content and/or username case insensitive
@@ -306,14 +307,14 @@ app.get('/M00982633/search', async (req, res) => {
 });
 
 // get post form specific user comapreing content used in search bar
-app.get('/M00982633/search/user/:username', async (req, res) => {
+app.get('/M00982633/users/search/:username', async (req, res) => {
     const { username } = req.params;
     const { searchValue } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    console.log(`Received request at /M00982633/search/user/${username}?searchValue=${searchValue}&page=${page}&limit=${limit}`);
+    console.log(`Received request at /M00982633/users/search/${username}?searchValue=${searchValue}&page=${page}&limit=${limit}`);
     try {
         await client.connect();
         // search by content case insensitive and filter by username
@@ -329,10 +330,10 @@ app.get('/M00982633/search/user/:username', async (req, res) => {
     }
 });
 
-// POST endpoint to follow or unfollow a user
+// POST endpoint to follow a user
 app.post('/M00982633/follow', async (req, res) => {
     const { follower, followed } = req.body;
-    console.log(`Received request to follow/unfollow user: ${followed} by ${follower}`);
+    console.log(`Received request to follow user: ${followed} by ${follower}`);
 
     // Check if the follower is trying to follow themselves
     if (follower === followed) {
@@ -341,42 +342,51 @@ app.post('/M00982633/follow', async (req, res) => {
 
     try {
         await client.connect();
-        // Check if the user is already followed
-        const user = await userCollection.findOne({ username: follower, following: followed });
-        let result;
-        if (user) {
-            // User is already followed, so unfollow them
-            result = await userCollection.updateOne(
-                { username: follower },
-                { $pull: { following: followed } }
-            );
-            if (result.modifiedCount === 1) {
-                res.status(200).json({ message: 'User unfollowed successfully' });
-            } else {
-                res.status(404).json({ error: 'Follower not found' });
-            }
+        // Follow the user
+        const result = await userCollection.updateOne(
+            { username: follower },
+            { $addToSet: { following: followed } } // Add to set to avoid duplicates
+        );
+        if (result.modifiedCount === 1) {
+            res.status(200).json({ message: 'User followed successfully' });
         } else {
-            // User is not followed, so follow them
-            result = await userCollection.updateOne(
-                { username: follower },
-                { $addToSet: { following: followed } } // Add to set to avoid duplicates
-            );
-            if (result.modifiedCount === 1) {
-                res.status(200).json({ message: 'User followed successfully' });
-            } else {
-                res.status(404).json({ error: 'Follower not found' });
-            }
+            res.status(404).json({ error: 'Follower not found' });
         }
     } catch (error) {
-        console.error('Error following/unfollowing user:', error);
-        res.status(500).json({ error: 'Failed to follow/unfollow user' });
+        console.error('Error following user:', error);
+        res.status(500).json({ error: 'Failed to follow user' });
+    } finally {
+        await client.close();
+    }
+});
+
+// DELETE endpoint to unfollow a user
+app.delete('/M00982633/follow', async (req, res) => {
+    const { follower, followed } = req.body;
+    console.log(`Received request to unfollow user: ${followed} by ${follower}`);
+
+    try {
+        await client.connect();
+        // Unfollow the user
+        const result = await userCollection.updateOne(
+            { username: follower },
+            { $pull: { following: followed } }
+        );
+        if (result.modifiedCount === 1) {
+            res.status(200).json({ message: 'User unfollowed successfully' });
+        } else {
+            res.status(404).json({ error: 'Follower not found' });
+        }
+    } catch (error) {
+        console.error('Error unfollowing user:', error);
+        res.status(500).json({ error: 'Failed to unfollow user' });
     } finally {
         await client.close();
     }
 });
 
 // Endpoint to check if the current user follows a specific user
-app.get('/M00982633/follows/:username', async (req, res) => {
+app.get('/M00982633/follow/:username', async (req, res) => {
     const currentUser = req.session.username;
     const { username } = req.params;
 
@@ -401,13 +411,13 @@ app.get('/M00982633/follows/:username', async (req, res) => {
 });
 
 // GET endpoint to get the posts of users that the current user is following
-app.get('/M00982633/following', async (req, res) => {
+app.get('/M00982633/follows/posts', async (req, res) => {
     const username = req.session.username;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    console.log(`Received request at /M00982633/following by user?page=${page}&limit=${limit}`);
+    console.log(`Received request at /M00982633/follow/posts?page=${page}&limit=${limit}`);
     try {
         await client.connect();
         const user = await userCollection.findOne({ username: username });
@@ -416,6 +426,7 @@ app.get('/M00982633/following', async (req, res) => {
         }
         // get posts from users that the current user is following, excluding the logged-in user's posts
         const posts = await postCollection.find({ user: { $in: user.following } }).skip(skip).limit(limit).toArray();
+        console.log(posts);
         res.status(200).json(posts);
     } catch (error) {
         console.error('Error getting posts from following users:', error);

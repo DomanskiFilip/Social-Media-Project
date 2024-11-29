@@ -45,7 +45,7 @@ async function registerUser() {
     };
 
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/register', {
+        const response = await fetch('http://127.0.0.1:8080/M00982633/users', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -88,7 +88,7 @@ async function loginUser() {
     };
 
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/login', {
+        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

@@ -1,4 +1,4 @@
-import { getPosts, getPostDetails, feed, limit, searchFeed} from './postsAndFeed.js';
+import { getPosts, getPostDetails, feed, limit} from './postsAndFeed.js';
 
 // html elements
 const loginRegisterScreen = document.getElementById('login_register_screen');
@@ -14,7 +14,7 @@ let page = 1; // page number for pagination
 // function checking currently login user and getting their posts throu getMyPosts function
 async function checkCurrentUser(page) {
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/current-user', {
+        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -35,8 +35,8 @@ async function checkCurrentUser(page) {
 // automaticly log in user if session is still active
 async function AutoLogIn(){
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/check-login', {
-            method: 'GET',
+        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
+            method: 'POST',
             credentials: 'include'
         });
         if (response.status === 200) {
@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 // log out function
 async function LogOutFunction() {
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/logout', {
-            method: 'POST',
+        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
+            method: 'DELETE',
             credentials: 'include'
         });
         if (response.status === 200) {
@@ -92,7 +92,7 @@ year.textContent = new Date().getFullYear();
 async function deletePost(postId) {
     console.log(`Attempting to delete post with ID: ${postId}`);
     try {
-        const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/${postId}`, {
+        const response = await fetch(`http://127.0.0.1:8080/M00982633/contents/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -113,25 +113,10 @@ async function deletePost(postId) {
 
 // function to get only posts made by logged in user with pagination
 async function getMyPosts(username, page) {
-    // if search bar exists, after typing something in search bar, search the feed
-    const search_my_feed = document.getElementById('search_my_posts'); // search input field
-    if (search_my_feed) {
-        search_my_feed.addEventListener('keyup', async (event) => {
-            page = 1;  // page number for pagination
-            searchMyPosts(username, page, event.target.value);
-        });
-    } else { // create search bar for user's posts
-        const search_bar = document.getElementById('search_bar');
-        search_bar.innerHTML = '';
-        const search = document.createElement('input');
-        search.type = 'text';
-        search.placeholder = 'Search';
-        search.className = 'search';
-        search.id = 'search_my_posts';
-        search_bar.appendChild(search);
-    }
+    // Initialize search bar for user's posts
+    initializeSearchBarMyPosts(username);
     try {
-        const response = await fetch(`http://127.0.0.1:4000/M00982633/posts/user/${username}?page=${page}&limit=${limit}`, {
+        const response = await fetch(`http://127.0.0.1:8080/M00982633/contents/user/${username}?page=${page}&limit=${limit}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -184,10 +169,34 @@ async function getMyPosts(username, page) {
 }
 
 
+// Initialize search bar for user's posts
+function initializeSearchBarMyPosts(username) {
+    const search_my_feed = document.getElementById('search_my_posts'); // search input field
+    if (search_my_feed) {
+        search_my_feed.addEventListener('keyup', async (event) => {
+            page = 1;  // page number for pagination
+            searchMyPosts(username, page, event.target.value);
+        });
+    } else { // create search bar for user's posts
+        const search_bar = document.getElementById('search_bar');
+        search_bar.innerHTML = '';
+        const search = document.createElement('input');
+        search.type = 'text';
+        search.placeholder = 'Search';
+        search.className = 'search';
+        search.id = 'search_my_posts';
+        search_bar.appendChild(search);
+        search.addEventListener('keyup', async (event) => {
+            page = 1;  // page number for pagination
+            searchMyPosts(username, page, event.target.value);
+        });
+    }
+}
+
 // search My Posts function
 async function searchMyPosts(username, page, searchValue) {
     try {
-        const response = await fetch(`http://127.0.0.1:4000/M00982633/search/user/${username}?page=${page}&limit=${limit}&searchValue=${searchValue}`, {
+        const response = await fetch(`http://127.0.0.1:8080/M00982633/users/search/${username}?page=${page}&limit=${limit}&searchValue=${searchValue}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -241,76 +250,63 @@ async function searchMyPosts(username, page, searchValue) {
 
 // function to get posts from user's following list
 async function getFollowingPosts(page) {
-    // confirm logged in user information
     try {
-        const response = await fetch('http://127.0.0.1:4000/M00982633/current-user', {
+        const response = await fetch(`http://127.0.0.1:8080/M00982633/follows/posts?page=${page}&limit=${limit}`, {
             method: 'GET',
-            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
         if (response.status === 200) {
-            const user_data = await response.json();
-            // get posts from user's following list
-            try {
-                const response = await fetch(`http://127.0.0.1:4000/M00982633/following?page=${page}&limit=${limit}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (response.status === 200) {
-                    const posts = await response.json();
-                    if (page === 1) {
-                        feed.innerHTML = ''; // Clear the feed only if it's the first page
-                    }
-                    if (posts.length === 0 && page === 1) {
-                        feed.innerHTML = '<p>No posts to display</p>'; // Show message if no posts
-                    } else {
-                        posts.forEach(post => {
-                            const postElement = document.createElement('div');
-                            postElement.id = post.postId;
-                            postElement.innerHTML = `
-                                <h3 class="poster">${post.user}</h3>
-                                <p class="post_content_feed">${post.content}</p>
-                                <p class="post_date">${post.date}</p>
-                            `;
-                            postElement.addEventListener('click', () => {
-                                let backMarcker = 2; // a marker to tell the getPostDetails function that the back button was clicked from the feed
-                                getPostDetails(postElement.id, backMarcker);
-                            });
-                            feed.appendChild(postElement);
-                        });
-
-                        if (posts.length === limit) {
-                            const showMoreButton = document.createElement('button');
-                            showMoreButton.className = 'show_more';
-                            showMoreButton.textContent = 'Show More';
-                            showMoreButton.id = `show_more_${page}`;
-                            showMoreButton.addEventListener('click', () => {
-                                document.getElementById(`show_more_${page}`).remove(); // remove the previous show more button
-                                page++;  // page number for pagination
-                                getFollowingPosts(page);
-                            });
-                            feed.appendChild(showMoreButton);
-                        }
-                    }
-                } else if (response.status === 404) {
-                    if (page === 1) {
-                        feed.innerHTML = '<p>No posts to display</p>'; // Show message if no posts
-                    }
-                } else {
-                    console.log('Error getting following posts:', response.status);
+            const posts = await response.json();
+            console.log('Received posts:', posts); // Log the received posts
+            if (Array.isArray(posts)) {
+                if (page === 1) {
+                    feed.innerHTML = ''; // Clear the feed only if it's the first page
                 }
-            } catch (error) {
-                console.log('Error getting following posts:', error);
+                if (posts.length === 0 && page === 1) {
+                    feed.innerHTML = '<p>No posts to display</p>'; // Show message if no posts
+                } else {
+                    posts.forEach(post => {
+                        const postElement = document.createElement('div');
+                        postElement.id = post.postId;
+                        postElement.innerHTML = `
+                            <h3 class="poster">${post.user}</h3>
+                            <p class="post_content_feed">${post.content}</p>
+                            <p class="post_date">${post.date}</p>
+                        `;
+                        postElement.addEventListener('click', () => {
+                            let backMarcker = 2; // a marker to tell the getPostDetails function that the back button was clicked from the feed
+                            getPostDetails(postElement.id, backMarcker);
+                        });
+                        feed.appendChild(postElement);
+                    });
+
+                    if (posts.length === limit) {
+                        const showMoreButton = document.createElement('button');
+                        showMoreButton.className = 'show_more';
+                        showMoreButton.textContent = 'Show More';
+                        showMoreButton.id = `show_more_${page}`;
+                        showMoreButton.addEventListener('click', () => {
+                            document.getElementById(`show_more_${page}`).remove(); // remove the previous show more button
+                            page++;  // page number for pagination
+                            getFollowingPosts(page);
+                        });
+                        feed.appendChild(showMoreButton);
+                    }
+                }
+            } else {
+                console.log('Error: posts is not an array');
+            }
+        } else if (response.status === 404) {
+            if (page === 1) {
+                feed.innerHTML = '<p>No posts to display</p>'; // Show message if no posts
             }
         } else {
-            console.log('Error fetching current user:', response.status);
+            console.log('Error getting following posts:', response.status);
         }
     } catch (error) {
-        console.log('Error fetching current user:', error);
+        console.log('Error fetching following posts:', error);
     }
 }
 
@@ -342,4 +338,4 @@ followingButton.addEventListener('click', async () => {
     getFollowingPosts(page);
 });
 
-export { checkCurrentUser, getMyPosts };
+export { checkCurrentUser, getMyPosts, getFollowingPosts };
