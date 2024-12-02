@@ -26,7 +26,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(expressSession({
     secret: "cst 2120 secret",
-    cookie: { maxAge: 60000 },
+    cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours sesion time
     resave: false,
     saveUninitialized: true
 }));
