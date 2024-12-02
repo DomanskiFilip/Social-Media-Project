@@ -61,7 +61,7 @@ async function getPosts(page) {
 // search feed function to search for posts in the feed
 async function searchFeed(page, searchValue) {
     try {
-        const response = await fetch(`http://127.0.0.1:8080/M00982633/search?page=${page}&limit=${limit}&searchValue=${searchValue}`, {
+        const response = await fetch(`http://127.0.0.1:8080/M00982633/search?page=${page}&limit=${limit}&q=${searchValue}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'

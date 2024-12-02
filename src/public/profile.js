@@ -196,7 +196,7 @@ function initializeSearchBarMyPosts(username) {
 // search My Posts function
 async function searchMyPosts(username, page, searchValue) {
     try {
-        const response = await fetch(`http://127.0.0.1:8080/M00982633/users/search/${username}?page=${page}&limit=${limit}&searchValue=${searchValue}`, {
+        const response = await fetch(`http://127.0.0.1:8080/M00982633/users/search/${username}?page=${page}&limit=${limit}&q=${searchValue}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'

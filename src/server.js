@@ -41,7 +41,7 @@ app.get('/M00982633/weather', (req, res) => {
 	  port: null,
 	  path: '/current.json?q=53.1%2C-0.13',
 	  headers: {
-		//'x-rapidapi-key': '4ac38c9824mshee82220f019df95p17748fjsnbd9456480bc1',
+		'x-rapidapi-key': '4ac38c9824mshee82220f019df95p17748fjsnbd9456480bc1',
 		'x-rapidapi-host': 'weatherapi-com.p.rapidapi.com'
 	  }
 	};
@@ -278,23 +278,23 @@ app.delete('/M00982633/contents/:postId', async (req, res) => {
 
 // get post comapreing content used in search bar
 app.get('/M00982633/search', async (req, res) => {
-    const { searchValue } = req.query;
+    const { q } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    if (!searchValue) {
+    if (!q) {
         return res.status(300).json({ error: 'searchValue is required' });
     }
 
-    console.log(`Received request at /M00982633/contents/search?searchValue=${encodeURIComponent(searchValue)}&page=${page}&limit=${limit}`);
+    console.log(`Received request at /M00982633/contents/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`);
     try {
         await client.connect();
         // search by content and/or username case insensitive
         const posts = await postCollection.find({
             $or: [
-                { content: { $regex: searchValue, $options: 'i' } },
-                { user: { $regex: searchValue, $options: 'i' } }
+                { content: { $regex: q, $options: 'i' } },
+                { user: { $regex: q, $options: 'i' } }
             ]
         }).skip(skip).limit(limit).toArray();
         res.status(200).json(posts);
@@ -309,18 +309,18 @@ app.get('/M00982633/search', async (req, res) => {
 // get post form specific user comapreing content used in search bar
 app.get('/M00982633/users/search/:username', async (req, res) => {
     const { username } = req.params;
-    const { searchValue } = req.query;
+    const { q } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    console.log(`Received request at /M00982633/users/search/${username}?searchValue=${searchValue}&page=${page}&limit=${limit}`);
+    console.log(`Received request at /M00982633/users/search/${username}?q=${q}&page=${page}&limit=${limit}`);
     try {
         await client.connect();
         // search by content case insensitive and filter by username
         const posts = await postCollection.find({
             user: username,
-            content: { $regex: searchValue, $options: 'i' }}).skip(skip).limit(limit).toArray();
+            content: { $regex: q, $options: 'i' }}).skip(skip).limit(limit).toArray();
         res.status(200).json(posts);
     } catch (error) {
         console.error('Error searching posts:', error);
