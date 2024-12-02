@@ -1,0 +1,4 @@
+const STUDENT_NUMBER = 'M00982633';
+const PORT = 8080;
+
+export { STUDENT_NUMBER, PORT };

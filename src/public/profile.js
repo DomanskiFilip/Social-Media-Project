@@ -1,4 +1,5 @@
 import { getPosts, getPostDetails, feed, limit} from './postsAndFeed.js';
+import { STUDENT_NUMBER, PORT } from './strings.js';
 
 // html elements
 const loginRegisterScreen = document.getElementById('login_register_screen');
@@ -14,7 +15,7 @@ let page = 1; // page number for pagination
 // function checking currently login user and getting their posts throu getMyPosts function
 async function checkCurrentUser(page) {
     try {
-        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/login`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -35,7 +36,7 @@ async function checkCurrentUser(page) {
 // automaticly log in user if session is still active
 async function AutoLogIn(){
     try {
-        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/login`, {
             method: 'POST',
             credentials: 'include'
         });
@@ -63,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 // log out function
 async function LogOutFunction() {
     try {
-        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/login`, {
             method: 'DELETE',
             credentials: 'include'
         });
@@ -92,7 +93,7 @@ year.textContent = new Date().getFullYear();
 async function deletePost(postId) {
     console.log(`Attempting to delete post with ID: ${postId}`);
     try {
-        const response = await fetch(`http://127.0.0.1:8080/M00982633/contents/${postId}`, {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/contents/${postId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -116,7 +117,7 @@ async function getMyPosts(username, page) {
     // Initialize search bar for user's posts
     initializeSearchBarMyPosts(username);
     try {
-        const response = await fetch(`http://127.0.0.1:8080/M00982633/contents/user/${username}?page=${page}&limit=${limit}`, {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/contents/user/${username}?page=${page}&limit=${limit}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -196,7 +197,7 @@ function initializeSearchBarMyPosts(username) {
 // search My Posts function
 async function searchMyPosts(username, page, searchValue) {
     try {
-        const response = await fetch(`http://127.0.0.1:8080/M00982633/users/search/${username}?page=${page}&limit=${limit}&q=${searchValue}`, {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/users/search/${username}?page=${page}&limit=${limit}&q=${searchValue}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -251,7 +252,7 @@ async function searchMyPosts(username, page, searchValue) {
 // function to get posts from user's following list
 async function getFollowingPosts(page) {
     try {
-        const response = await fetch(`http://127.0.0.1:8080/M00982633/follows/posts?page=${page}&limit=${limit}`, {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/follows/posts?page=${page}&limit=${limit}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'

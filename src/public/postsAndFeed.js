@@ -1,4 +1,5 @@
 import { checkCurrentUser, getFollowingPosts } from './profile.js';
+import { PORT, STUDENT_NUMBER } from './strings.js';
 
 const postButton = document.getElementById('post_button');
 const postError = document.getElementById('post_error');
@@ -12,7 +13,7 @@ async function getPosts(page) {
     initializeSearchBar();
     // get posts from the server
     try {
-        const response = await fetch(`http://127.0.0.1:8080/M00982633/contents?page=${page}&limit=${limit}`, {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/contents?page=${page}&limit=${limit}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -61,7 +62,7 @@ async function getPosts(page) {
 // search feed function to search for posts in the feed
 async function searchFeed(page, searchValue) {
     try {
-        const response = await fetch(`http://127.0.0.1:8080/M00982633/search?page=${page}&limit=${limit}&q=${searchValue}`, {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/search?page=${page}&limit=${limit}&q=${searchValue}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -116,7 +117,7 @@ async function searchFeed(page, searchValue) {
 async function getPostDetails(postId, backMarcker) {
     // check current user for following functionality
     try {
-        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/login`, {
             method: 'GET',
             credentials: 'include',
             headers: {
@@ -126,7 +127,7 @@ async function getPostDetails(postId, backMarcker) {
         if (response.status === 200) {
             const user_data = await response.json();
             try {
-                const response = await fetch(`http://127.0.0.1:8080/M00982633/contents/${postId}`, {
+                const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/contents/${postId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -150,7 +151,7 @@ async function getPostDetails(postId, backMarcker) {
                     const followButton = selectedElement.querySelector('.follow');
                     if (followButton) {
                         // Check if the current user follows the post's author
-                        const followResponse = await fetch(`http://127.0.0.1:8080/M00982633/follow/${post.user}`, {
+                        const followResponse = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/follow/${post.user}`, {
                             method: 'GET',
                             credentials: 'include',
                             headers: {
@@ -235,7 +236,7 @@ async function postThought() {
     }
 
     try {
-        const response = await fetch('http://127.0.0.1:8080/M00982633/contents', {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/contents`, {
             method: 'POST',
             body: formData,
             credentials: 'include' // Ensure cookies are included in the request
@@ -258,7 +259,7 @@ async function postThought() {
 // follow function to follow or unfollow a user
 async function followed(follower, followed, action) {
     try {
-        const response = await fetch('http://127.0.0.1:8080/M00982633/follow', {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/follow`, {
             method: action === 'follow' ? 'POST' : 'DELETE',
             headers: {
                 'Content-Type': 'application/json'

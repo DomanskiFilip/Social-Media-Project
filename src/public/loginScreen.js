@@ -1,3 +1,5 @@
+import {PORT, STUDENT_NUMBER} from './strings.js';
+
 // html elements
 let usernameLogin = document.getElementById('username_login');
 let passwordLogin = document.getElementById('password_login');
@@ -45,7 +47,7 @@ async function registerUser() {
     };
 
     try {
-        const response = await fetch('http://127.0.0.1:8080/M00982633/users', {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/users`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -88,7 +90,7 @@ async function loginUser() {
     };
 
     try {
-        const response = await fetch('http://127.0.0.1:8080/M00982633/login', {
+        const response = await fetch(`http://127.0.0.1:${PORT}/${STUDENT_NUMBER}/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

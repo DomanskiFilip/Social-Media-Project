@@ -8,7 +8,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const expressSession = require('express-session');
 const multer = require('multer'); // multer for uploading images
 const upload = multer({ dest: 'uploads/' }); // Configure the upload destination
-
+const STUDENT_NUMBER = 'M00982633';
 
 const app = express();
 const PORT = 8080;
@@ -32,7 +32,7 @@ app.use(expressSession({
 }));
 
 // Define a route to get air quality data to show at the top of the page
-app.get('/M00982633/weather', (req, res) => {
+app.get('/'+ STUDENT_NUMBER +'/weather', (req, res) => {
 	const https = require('https');
   
 	const options = {
@@ -72,7 +72,7 @@ app.get('/M00982633/weather', (req, res) => {
   });
 
 // Serve index.html at /M00982633
-app.get('/M00982633', (req, res) => {
+app.get('/'+ STUDENT_NUMBER, (req, res) => {
 	res.sendFile(path.join(__dirname, '../src/public/index.html'));
   });
 
@@ -95,9 +95,9 @@ const userCollection = db.collection('users');
 const postCollection = db.collection('posts');
 
 // POST endpoint to register user
-app.post('/M00982633/users', async (req, res) => {
+app.post('/'+ STUDENT_NUMBER +'/users', async (req, res) => {
     const { username, password } = req.body;
-    console.log('Received request at /M00982633/register:', username);
+    console.log('Received request at /'+ STUDENT_NUMBER +'/register:', username);
 
     try {
         await client.connect();
@@ -122,9 +122,9 @@ app.post('/M00982633/users', async (req, res) => {
 });
 
 // POST endpoint to login user
-app.post('/M00982633/login', async (req, res) => {
+app.post('/'+ STUDENT_NUMBER +'/login', async (req, res) => {
     const { username, password } = req.body;
-    console.log('Received request at /M00982633/login:', username);
+    console.log('Received request at /'+ STUDENT_NUMBER +'/login:', username);
 
     try {
         await client.connect();
@@ -146,7 +146,7 @@ app.post('/M00982633/login', async (req, res) => {
 });
 
 // GET endpoint to check if user is logged in
-app.get('/M00982633/login', (req, res) => {
+app.get('/'+ STUDENT_NUMBER +'/login', (req, res) => {
     if (req.session.username) {
 		console.log('User is logged in:', req.session.username);
         res.status(200).json({ username: req.session.username });
@@ -156,7 +156,7 @@ app.get('/M00982633/login', (req, res) => {
 });
 
 // DELETE endpoint to logout user
-app.delete('/M00982633/login', (req, res) => {
+app.delete('/'+ STUDENT_NUMBER +'/login', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             return res.status(500).json({ error: 'Failed to log out' });
@@ -166,7 +166,7 @@ app.delete('/M00982633/login', (req, res) => {
 });
 
 // POST endpoint to post a message
-app.post('/M00982633/contents', upload.single('image'), async (req, res) => {
+app.post('/'+ STUDENT_NUMBER +'/contents', upload.single('image'), async (req, res) => {
     if (!req.session.username) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -190,7 +190,7 @@ app.post('/M00982633/contents', upload.single('image'), async (req, res) => {
     }
 });
 
-app.get('/M00982633/contents', async (req, res) => {
+app.get('/'+ STUDENT_NUMBER +'/contents', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
@@ -209,9 +209,9 @@ app.get('/M00982633/contents', async (req, res) => {
 });
 
 // GET endpoint to get a specific post by postId
-app.get('/M00982633/contents/:postId', async (req, res) => {
+app.get('/'+ STUDENT_NUMBER +'/contents/:postId', async (req, res) => {
     const { postId } = req.params;
-    console.log(`Received request at /M00982633/contents/${postId}`);
+    console.log(`Received request at /${STUDENT_NUMBER}/contents/${postId}`);
 
     // Validate postId
     if (!ObjectId.isValid(postId)) {
@@ -235,13 +235,13 @@ app.get('/M00982633/contents/:postId', async (req, res) => {
     }
 });
 
-app.get('/M00982633/contents/user/:username', async (req, res) => {
+app.get('/'+ STUDENT_NUMBER +'/contents/user/:username', async (req, res) => {
     const { username } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    console.log(`Received request at /M00982633/contents/user/${username}?page=${page}&limit=${limit}`);
+    console.log(`Received request at /${STUDENT_NUMBER}/contents/user/${username}?page=${page}&limit=${limit}`);
     try {
         await client.connect();
         const posts = await postCollection.find({ user: username }).skip(skip).limit(limit).toArray();
@@ -255,10 +255,10 @@ app.get('/M00982633/contents/user/:username', async (req, res) => {
 });
 
 // DELETE endpoint to delete a specific post by postId and username
-app.delete('/M00982633/contents/:postId', async (req, res) => {
+app.delete('/'+ STUDENT_NUMBER +'/contents/:postId', async (req, res) => {
     const { postId } = req.params;
     const username = req.session.username;
-    console.log(`Received request at /M00982633/contents/${postId} by user ${username}`);
+    console.log(`Received request at /${STUDENT_NUMBER}/contents/${postId} by user ${username}`);
     try {
         await client.connect();
         // delete the post from the database
@@ -277,7 +277,7 @@ app.delete('/M00982633/contents/:postId', async (req, res) => {
 });
 
 // get post comapreing content used in search bar
-app.get('/M00982633/search', async (req, res) => {
+app.get('/'+ STUDENT_NUMBER +'/search', async (req, res) => {
     const { q } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
@@ -287,7 +287,7 @@ app.get('/M00982633/search', async (req, res) => {
         return res.status(300).json({ error: 'searchValue is required' });
     }
 
-    console.log(`Received request at /M00982633/contents/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`);
+    console.log(`Received request at /${STUDENT_NUMBER}/contents/search?q=${encodeURIComponent(q)}&page=${page}&limit=${limit}`);
     try {
         await client.connect();
         // search by content and/or username case insensitive
@@ -307,14 +307,14 @@ app.get('/M00982633/search', async (req, res) => {
 });
 
 // get post form specific user comapreing content used in search bar
-app.get('/M00982633/users/search/:username', async (req, res) => {
+app.get('/'+ STUDENT_NUMBER +'/users/search/:username', async (req, res) => {
     const { username } = req.params;
     const { q } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    console.log(`Received request at /M00982633/users/search/${username}?q=${q}&page=${page}&limit=${limit}`);
+    console.log(`Received request at /${STUDENT_NUMBER}/users/search/${username}?q=${q}&page=${page}&limit=${limit}`);
     try {
         await client.connect();
         // search by content case insensitive and filter by username
@@ -331,7 +331,7 @@ app.get('/M00982633/users/search/:username', async (req, res) => {
 });
 
 // POST endpoint to follow a user
-app.post('/M00982633/follow', async (req, res) => {
+app.post('/'+ STUDENT_NUMBER +'/follow', async (req, res) => {
     const { follower, followed } = req.body;
     console.log(`Received request to follow user: ${followed} by ${follower}`);
 
@@ -361,7 +361,7 @@ app.post('/M00982633/follow', async (req, res) => {
 });
 
 // DELETE endpoint to unfollow a user
-app.delete('/M00982633/follow', async (req, res) => {
+app.delete('/'+ STUDENT_NUMBER +'/follow', async (req, res) => {
     const { follower, followed } = req.body;
     console.log(`Received request to unfollow user: ${followed} by ${follower}`);
 
@@ -386,7 +386,7 @@ app.delete('/M00982633/follow', async (req, res) => {
 });
 
 // Endpoint to check if the current user follows a specific user
-app.get('/M00982633/follow/:username', async (req, res) => {
+app.get('/'+ STUDENT_NUMBER +'/follow/:username', async (req, res) => {
     const currentUser = req.session.username;
     const { username } = req.params;
 
@@ -411,13 +411,13 @@ app.get('/M00982633/follow/:username', async (req, res) => {
 });
 
 // GET endpoint to get the posts of users that the current user is following
-app.get('/M00982633/follows/posts', async (req, res) => {
+app.get('/'+ STUDENT_NUMBER +'/follows/posts', async (req, res) => {
     const username = req.session.username;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 2;
     const skip = (page - 1) * limit;
 
-    console.log(`Received request at /M00982633/follow/posts?page=${page}&limit=${limit}`);
+    console.log(`Received request at /${STUDENT_NUMBER}/follow/posts?page=${page}&limit=${limit}`);
     try {
         await client.connect();
         const user = await userCollection.findOne({ username: username });
@@ -438,5 +438,5 @@ app.get('/M00982633/follows/posts', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {;
-    console.log(`Server running at http://127.0.0.1:${PORT}/M00982633`);
+    console.log(`Server running at http://127.0.0.1:${PORT}/${STUDENT_NUMBER}`);
 });
