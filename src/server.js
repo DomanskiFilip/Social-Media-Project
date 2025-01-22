@@ -41,7 +41,7 @@ app.get('/'+ STUDENT_NUMBER +'/weather', (req, res) => {
 	  port: null,
 	  path: '/current.json?q=53.1%2C-0.13',
 	  headers: {
-		'x-rapidapi-key': '4ac38c9824mshee82220f019df95p17748fjsnbd9456480bc1',
+		'x-rapidapi-key': 
 		'x-rapidapi-host': 'weatherapi-com.p.rapidapi.com'
 	  }
 	};
